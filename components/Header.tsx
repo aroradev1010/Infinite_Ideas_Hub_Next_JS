@@ -24,7 +24,7 @@ const Starfield: React.FC<StarfieldProps> = ({
 
       if (c) {
         let w = window.innerWidth;
-        let h = canvas.parentElement?.clientHeight || 128; // Default to header height (128px)
+        let h = canvas.parentElement?.clientHeight || 128;
 
         const setCanvasExtents = () => {
           canvas.width = w;
@@ -147,16 +147,20 @@ const Starfield: React.FC<StarfieldProps> = ({
 
 const Header: React.FC = () => {
   return (
-    <header className="relative w-full bg-background h-full">
+    <header className="relative w-full h-full bg-background overflow-hidden">
       <Starfield
         starCount={2000}
         speedFactor={0.05}
         backgroundColor="black"
         starColor={[255, 255, 255]}
       />
-      <div className="absolute inset-0 flex flex-col gap-2 items-center justify-center z-10 ">
-        <Image src={"/headerImage.png"} alt="" width={150} height={50} />
-
+      <div className="absolute inset-0 flex flex-col gap-2 items-center justify-center z-10">
+        <Image
+          src="/headerImage.png"
+          alt="Header Image"
+          width={150}
+          height={50}
+        />
         <h1 className="text-3xl font-bold text-white dark:text-gray-100">
           Thoughts, stories and ideas.
         </h1>

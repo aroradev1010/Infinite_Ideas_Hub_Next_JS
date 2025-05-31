@@ -1,11 +1,13 @@
+import FeaturedArticle from "@/components/FeaturedArticle";
 import Header from "@/components/Header";
 
 export default function Home() {
   return (
     <div className="">
-      <div className="h-72">
+      <div className="h-96">
         <Header />
       </div>
+      <FeaturedArticle />
     </div>
   );
 }
