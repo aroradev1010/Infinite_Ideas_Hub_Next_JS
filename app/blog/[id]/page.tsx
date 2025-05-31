@@ -10,6 +10,13 @@ export default async function BlogPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="flex items-center gap-3 mb-5 text-gray-300">
+        <span className="capitalize">{blog.author}</span>
+        <span>/</span>
+        <span className="font-extralight">
+          {new Date(blog.createdAt).toLocaleDateString()}
+        </span>
+      </div>
       <Image
         src={blog.image || "/fallback.jpg"}
         alt={blog.title}
@@ -18,10 +25,7 @@ export default async function BlogPage({ params }: { params: { id: string } }) {
         className="rounded-xl object-cover w-full h-auto mb-8"
       />
       <h1 className="text-4xl font-bold mb-4 capitalize">{blog.title}</h1>
-      <div className="text-lg text-gray-500 mb-2 capitalize">
-        By {blog.author} | {new Date(blog.createdAt).toDateString()} |{" "}
-        {blog.category}
-      </div>
+
       <p className="text-2xl text-gray-400 leading-relaxed mt-6">
         {blog.description}
       </p>
