@@ -7,7 +7,9 @@ export default function Home() {
       <div className="h-96">
         <Header />
       </div>
-      <FeaturedArticle />
+      <div className="lg:mx-auto lg:w-3/5">
+        <FeaturedArticle />
+      </div>
     </div>
   );
 }

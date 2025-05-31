@@ -18,15 +18,18 @@ export const Navbar = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative lg:w-3/5 lg:mx-auto">
       <div className="flex items-center justify-between py-4 px-4 relative">
         <div>
-          <h1 className="font-extrabold text-2xl text-[#00CBF1] tracking-widest">
+          <h1 className="font-extrabold md:text-2xl  text-[#00CBF1] tracking-widest">
             InfiniteIdeasHub
           </h1>
         </div>
         <div className="flex gap-3 items-center">
-          <PrimaryButton className="uppercase text-[15px] font-extrabold px-5 tracking-wider" />
+          <PrimaryButton
+            className="uppercase md:text-[15px] font-extrabold px-5 tracking-wider hidden sm:flex"
+            text="Subscribe"
+          />
           <button
             className="bg-secondary hover:bg-secondary/60 cursor-pointer text-white rounded-full p-2"
             onClick={toggleMenu}

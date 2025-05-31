@@ -161,7 +161,7 @@ const Header: React.FC = () => {
           width={150}
           height={50}
         />
-        <h1 className="text-3xl font-bold text-white dark:text-gray-100">
+        <h1 className="md:text-3xl text-xl font-bold text-white dark:text-gray-100">
           Thoughts, stories and ideas.
         </h1>
       </div>
