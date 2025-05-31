@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${nunito.variable} antialiased dark px-4`}>
+      <body className={`${nunito.variable} antialiased dark`}>
         <Navbar />
         <div className="z-0">{children}</div>
       </body>
