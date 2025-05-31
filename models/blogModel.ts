@@ -1,4 +1,3 @@
-// models/blog.ts
 import { Blog } from "@/types/blogType";
 
 export const transformBlog = (doc: any): Blog => ({
@@ -9,5 +8,4 @@ export const transformBlog = (doc: any): Blog => ({
   author: doc.author,
   category: doc.category,
   createdAt: new Date(doc.createdAt).toISOString(),
-  updatedAt: new Date(doc.updatedAt).toISOString(),
 });

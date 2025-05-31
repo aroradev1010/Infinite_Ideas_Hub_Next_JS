@@ -41,3 +41,21 @@ export async function getBlogById(id: string): Promise<Blog | null> {
     return null;
   }
 }
+
+export async function getAllBlogs(): Promise<Blog[]> {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+
+    const blogs = await db
+      .collection("blogs")
+      .find({})
+      .sort({ createdAt: -1 }) // Sort by newest
+      .toArray();
+
+    return blogs.map(transformBlog);
+  } catch (error) {
+    console.error("Failed to fetch blogs:", error);
+    return [];
+  }
+}

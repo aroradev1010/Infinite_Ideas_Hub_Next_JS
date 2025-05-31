@@ -6,5 +6,4 @@ export interface Blog {
   author: string;
   category: string;
   createdAt: string;
-  updatedAt: string;
 }

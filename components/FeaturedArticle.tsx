@@ -22,7 +22,7 @@ const FeaturedArticle: React.FC<Props> = ({ article }) => {
         <div className="grid lg:grid-cols-2 gap-10">
           <div className="hidden lg:block">
             <Image
-              src={article.image || "/fallback.jpg"}
+              src={article.image.trimEnd() || "/fallback.jpg"}
               alt={article.title}
               width={430}
               height={250}
@@ -33,7 +33,7 @@ const FeaturedArticle: React.FC<Props> = ({ article }) => {
           {/* Image for small to md screens */}
           <div className="w-full h-[200px] md:h-[400px] relative lg:hidden">
             <Image
-              src={article.image || "/fallback.jpg"}
+              src={article.image.trimEnd() || "/fallback.jpg"}
               alt={article.title}
               className="rounded-2xl object-cover"
               fill
