@@ -21,9 +21,12 @@ export const Navbar = () => {
     <div className="relative lg:w-3/5 lg:mx-auto">
       <div className="flex items-center justify-between py-4 px-4 relative">
         <div>
-          <h1 className="font-extrabold md:text-2xl  text-[#00CBF1] tracking-widest">
+          <Link
+            href={"/"}
+            className="font-extrabold md:text-2xl  text-[#00CBF1] tracking-widest"
+          >
             Infinite Ideas Hub
-          </h1>
+          </Link>
         </div>
         <div className="flex gap-3 items-center">
           <PrimaryButton

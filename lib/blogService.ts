@@ -2,6 +2,7 @@
 import clientPromise from "./mongodb";
 import { transformBlog } from "@/models/blogModel";
 import { Blog } from "@/types/blogType";
+import { ObjectId } from "mongodb";
 
 export async function getFeaturedArticle(): Promise<Blog | null> {
   try {
@@ -17,6 +18,26 @@ export async function getFeaturedArticle(): Promise<Blog | null> {
     return blog[0] ? transformBlog(blog[0]) : null;
   } catch (error) {
     console.error("Failed to fetch featured article:", error);
+    return null;
+  }
+}
+
+export async function getBlogById(id: string): Promise<Blog | null> {
+  if (!ObjectId.isValid(id)) {
+    console.error("Invalid blog id:", id);
+    return null;
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    const blog = await db
+      .collection("blogs")
+      .findOne({ _id: new ObjectId(id) });
+
+    return blog ? transformBlog(blog) : null;
+  } catch (error) {
+    console.error("Failed to fetch blog by ID:", error);
     return null;
   }
 }
