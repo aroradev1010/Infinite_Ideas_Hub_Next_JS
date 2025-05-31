@@ -1,14 +1,22 @@
-import FeaturedArticle from "@/components/FeaturedArticle";
+// app/page.tsx
 import Header from "@/components/Header";
+import FeaturedArticle from "@/components/FeaturedArticle";
+import { getFeaturedArticle } from "@/lib/blogService";
 
-export default function Home() {
+export default async function Home() {
+  const featuredArticle = await getFeaturedArticle();
+
   return (
-    <div className="">
+    <div>
       <div className="h-96">
         <Header />
       </div>
       <div className="lg:mx-auto lg:w-3/5">
-        <FeaturedArticle />
+        {featuredArticle ? (
+          <FeaturedArticle article={featuredArticle} />
+        ) : (
+          <p className="text-center py-10 text-gray-500">No article found.</p>
+        )}
       </div>
     </div>
   );

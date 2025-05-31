@@ -22,7 +22,7 @@ export const Navbar = () => {
       <div className="flex items-center justify-between py-4 px-4 relative">
         <div>
           <h1 className="font-extrabold md:text-2xl  text-[#00CBF1] tracking-widest">
-            InfiniteIdeasHub
+            Infinite Ideas Hub
           </h1>
         </div>
         <div className="flex gap-3 items-center">
