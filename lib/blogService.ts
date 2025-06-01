@@ -4,7 +4,7 @@ import { transformBlog } from "@/models/blogModel";
 import { Blog } from "@/types/blogType";
 import { ObjectId } from "mongodb";
 
-export async function getFeaturedArticle(): Promise<Blog | null> {
+export async function getFeaturedBlog(): Promise<Blog | null> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);

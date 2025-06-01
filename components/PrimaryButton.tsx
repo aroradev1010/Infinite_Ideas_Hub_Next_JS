@@ -5,13 +5,18 @@ import { cn } from "@/lib/utils";
 const PrimaryButton = ({
   className,
   text,
+  type,
 }: {
   className?: string;
   text: string;
+  type?: string;
 }) => {
   return (
     <Button
-      className={cn(`${className}`, "text-white rounded-full cursor-pointer")}
+      className={cn(
+        `${className}`,
+        "text-white  cursor-pointer font-extrabold"
+      )}
     >
       {text}
     </Button>
