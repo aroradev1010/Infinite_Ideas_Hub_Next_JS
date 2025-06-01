@@ -33,7 +33,7 @@ export default async function LatestArticles() {
             {/* Mobile/Tablet Image */}
             <div className="w-full h-[200px] md:h-[400px] relative lg:hidden">
               <Image
-                src={blog.image || "/fallback.jpg"}
+                src={blog.image.trimEnd() || "/fallback.jpg"}
                 alt={blog.title}
                 fill
                 className="rounded-2xl object-cover"

@@ -18,7 +18,7 @@ export default async function BlogPage({ params }: { params: { id: string } }) {
         </span>
       </div>
       <Image
-        src={blog.image || "/fallback.jpg"}
+        src={blog.image.trimEnd() || "/fallback.jpg"}
         alt={blog.title}
         width={1000}
         height={500}
