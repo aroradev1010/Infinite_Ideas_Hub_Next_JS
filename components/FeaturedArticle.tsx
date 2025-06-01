@@ -20,14 +20,14 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
         <h1 className="font-bold text-md px-4 mb-5 uppercase tracking-wider">
           Featured blog
         </h1>
-        <div className="grid xl:grid-cols-2 gap-10 ">
-          <div className="hidden xl:block">
+        <div className="grid xl:grid-cols-5 gap-10 ">
+          <div className="hidden xl:block col-span-2">
             <Image
               src={blog.image.trimEnd() || "/fallback.jpg"}
               alt={blog.title}
               width={430}
               height={250}
-              className="rounded-2xl object-cover w-full h-[250px]"
+              className="rounded-2xl object-cover w-full h-[300px]"
             />
           </div>
 
@@ -40,7 +40,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
               fill
             />
           </div>
-          <div className="space-y-5">
+          <div className="space-y-5 xl:col-span-3">
             <h1 className="text-2xl md:text-3xl xl:text-3xl font-extrabold capitalize">
               {blog.title}
             </h1>

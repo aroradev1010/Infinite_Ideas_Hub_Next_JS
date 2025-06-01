@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import PrimaryButton from "./PrimaryButton";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { id: 1, name: "Home", link: "/" },
@@ -18,7 +19,7 @@ export const Navbar = () => {
   };
 
   return (
-    <div className="relative lg:w-3/5 lg:mx-auto">
+    <div className="lg:mx-auto lg:w-4/5 xl:w-5/6">
       <div className="flex items-center justify-between py-4 px-4 relative">
         <div>
           <Link
@@ -28,13 +29,20 @@ export const Navbar = () => {
             Infinite Ideas Hub
           </Link>
         </div>
+
+        <ul className="flex gap-5 items-center">
+          {navLinks.map((link) => (
+            <NavItem key={link.id} name={link.name} href={link.link} />
+          ))}
+        </ul>
+
         <div className="flex gap-3 items-center">
           <PrimaryButton
             className="uppercase md:text-[15px] font-extrabold px-5 tracking-wider hidden sm:flex"
             text="Subscribe"
           />
           <button
-            className="bg-secondary hover:bg-secondary/60 cursor-pointer text-white rounded-full p-2"
+            className="bg-secondary hover:bg-secondary/60 cursor-pointer text-white rounded-full p-2 xl:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
@@ -56,6 +64,7 @@ export const Navbar = () => {
                 name={link.name}
                 href={link.link}
                 toggleMenu={toggleMenu}
+                className="text-2xl"
               />
             ))}
           </ul>
@@ -68,17 +77,19 @@ export const Navbar = () => {
 const NavItem = ({
   name,
   href,
+  className,
   toggleMenu,
 }: {
   name: string;
   href: string;
+  className?: string;
   toggleMenu: () => void;
 }) => {
   return (
     <li>
       <Link
         href={href}
-        className="font-bold hover:text-primary text-2xl"
+        className={cn(className, `font-bold hover:text-primary`)}
         onClick={toggleMenu}
       >
         {name}
