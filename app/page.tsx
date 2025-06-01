@@ -1,5 +1,5 @@
 // app/page.tsx
-import Header from "@/components/Header";
+import StarBackground from "@/components/StarBackground";
 import FeaturedArticle from "@/components/FeaturedArticle";
 import { getFeaturedBlog } from "@/lib/blogService";
 import LatestArticles from "@/components/LatestArticles";
@@ -11,7 +11,10 @@ export default async function Home() {
   return (
     <div>
       <div className="h-96">
-        <Header />
+        <StarBackground
+          imageSrc="/headerImage.png"
+          text="Thoughts, stories and ideas."
+        />
       </div>
       <div className="lg:mx-auto lg:w-4/5 xl:w-5/6">
         {featuredBlog ? (

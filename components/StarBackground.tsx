@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import React, { useEffect } from "react";
 
@@ -145,7 +146,15 @@ const Starfield: React.FC<StarfieldProps> = ({
   );
 };
 
-const Header: React.FC = () => {
+const StarBackground = ({
+  imageSrc,
+  imageClassName,
+  text,
+}: {
+  imageSrc: string;
+  text: string;
+  imageClassName?: string;
+}) => {
   return (
     <header className="relative w-full h-full bg-background overflow-hidden">
       <Starfield
@@ -156,17 +165,18 @@ const Header: React.FC = () => {
       />
       <div className="absolute inset-0 flex flex-col gap-2 items-center justify-center z-10">
         <Image
-          src="/headerImage.png"
+          src={imageSrc}
           alt="Header Image"
           width={150}
           height={50}
+          className={cn(imageClassName, "")}
         />
-        <h1 className="md:text-3xl text-xl font-bold text-white dark:text-gray-100">
-          Thoughts, stories and ideas.
+        <h1 className="md:text-3xl text-xl font-bold text-white dark:text-gray-100 capitalize">
+          {text}
         </h1>
       </div>
     </header>
   );
 };
 
-export default Header;
+export default StarBackground;
