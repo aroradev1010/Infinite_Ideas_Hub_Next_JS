@@ -4,6 +4,7 @@ import FeaturedArticle from "@/components/FeaturedArticle";
 import { getFeaturedBlog } from "@/lib/blogService";
 import LatestArticles from "@/components/LatestArticles";
 import SubscribeButton from "@/components/SubscribeButton";
+import PopularCategories from "@/components/PopularCategories";
 
 export default async function Home() {
   const featuredBlog = await getFeaturedBlog();
@@ -33,6 +34,7 @@ export default async function Home() {
           <div className="hidden xl:block col-span-1">
             <div className="sticky top-10 ml-20">
               <SubscribeButton />
+              <PopularCategories />
             </div>
           </div>
         </div>

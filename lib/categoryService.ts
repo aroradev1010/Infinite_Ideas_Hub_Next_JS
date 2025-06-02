@@ -2,7 +2,6 @@
 import clientPromise from "./mongodb";
 import { transformCategory } from "@/models/categoryModel";
 import { Category } from "@/types/categoryType";
-import { ObjectId } from "mongodb";
 
 export async function getAllCategories(): Promise<Category[]> {
   try {
