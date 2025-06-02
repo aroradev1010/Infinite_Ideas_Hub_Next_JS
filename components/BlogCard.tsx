@@ -12,7 +12,7 @@ interface BlogCardProps {
 export default function BlogCard({ blog }: BlogCardProps) {
   return (
     <Link href={`/blog/${blog.id}`} key={blog.id}>
-      <div className="grid xl:grid-cols-3 gap-5 group border-b pb-10">
+      <div className="grid xl:grid-cols-3 gap-5 group pb-10">
         {/* Desktop Image (circular) */}
         <div className="hidden xl:flex justify-center">
           <Image

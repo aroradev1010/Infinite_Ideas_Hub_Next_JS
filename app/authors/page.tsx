@@ -7,7 +7,7 @@ import React from "react";
 const page = async () => {
   const authors = await getAllAuthors();
   return (
-    <div>
+    <div className="">
       <div className="h-96">
         <StarBackground
           imageSrc="/fallback.avif"

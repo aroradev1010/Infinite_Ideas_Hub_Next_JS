@@ -21,7 +21,7 @@ export default async function AuthorDetailPage({
   const blogs = await getBlogsByAuthor(author.name);
 
   return (
-    <div className=" ">
+    <div className="">
       {/* ─── Author Header ───────────────────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground
