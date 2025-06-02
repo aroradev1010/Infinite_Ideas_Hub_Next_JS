@@ -28,8 +28,12 @@ export default async function Home() {
           <div className="xl:col-span-2">
             <LatestArticles />
           </div>
+
+          {/* Sticky subscribe button on the right */}
           <div className="hidden lg:block col-span-1">
-            <SubscribeButton />
+            <div className="sticky top-10 ml-20">
+              <SubscribeButton />
+            </div>
           </div>
         </div>
       </div>
