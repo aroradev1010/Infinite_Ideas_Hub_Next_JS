@@ -23,23 +23,8 @@ export default async function AuthorDetailPage({
   const blogs = await getBlogsByAuthor(author.name);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 ">
+    <div className="max-w-6xl mx-auto px-4 ">
       {/* ─── Author Header ───────────────────────────────────────────────────────── */}
-      {/* <div className="flex flex-col items-center text-center mb-12">
-        <div className="w-32 h-32 relative mb-4">
-          <Image
-            src={author.profileImage || "/fallback-avatar.png"}
-            alt={author.name}
-            fill
-            className="rounded-full object-cover"
-          />
-        </div>
-        <h1 className="text-3xl font-bold capitalize mb-2">{author.name}</h1>
-        <p className="text-gray-600 mb-2 line-clamp-3">{author.bio}</p>
-        <span className="text-sm text-gray-400">
-          Joined {new Date(author.createdAt).toDateString()}
-        </span>
-      </div> */}
       <div className="h-96">
         <StarBackground
           imageSrc={author.profileImage || "/fallback.avif"}
@@ -55,7 +40,7 @@ export default async function AuthorDetailPage({
           <Link
             href={`/blog/${blog.id}`}
             key={blog.id}
-            className="grid xl:grid-cols-3 group gap-5 border-b pb-5"
+            className="grid xl:grid-cols-3 group border-b pb-5"
           >
             {/* Desktop Image */}
             <div className="hidden xl:flex justify-center">

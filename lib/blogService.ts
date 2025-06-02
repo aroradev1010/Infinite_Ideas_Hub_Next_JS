@@ -77,3 +77,21 @@ export async function getBlogsByAuthor(authorName: string): Promise<Blog[]> {
     return [];
   }
 }
+
+export async function getBlogsByCategory(
+  categoryName: string
+): Promise<Blog[]> {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    const blogs = await db
+      .collection("blogs")
+      .find({ category: categoryName })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return blogs.map(transformBlog);
+  } catch (err) {
+    console.error("Failed to fetch blogs by category:", err);
+    return [];
+  }
+}
