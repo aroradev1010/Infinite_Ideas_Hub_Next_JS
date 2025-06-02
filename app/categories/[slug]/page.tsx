@@ -1,9 +1,11 @@
 // app/categories/[slug]/page.tsx
+
+import StarBackground from "@/components/StarBackground";
 import { getCategoryBySlug } from "@/lib/categoryService";
 import { getBlogsByCategory } from "@/lib/blogService";
-import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export default async function CategoryDetailPage({
   params,
@@ -12,51 +14,44 @@ export default async function CategoryDetailPage({
 }) {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
-
   if (!category) return notFound();
 
   const blogs = await getBlogsByCategory(category.name);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* ─── Category Header ─────────────────────────────────────────────── */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold capitalize">{category.name}</h1>
-        {category.description && (
-          <p className="mt-2 text-gray-400">{category.description}</p>
-        )}
-        <span className="mt-1 block text-sm text-gray-500">
-          Created {new Date(category.createdAt).toDateString()}
-        </span>
+    <div className="max-w-6xl mx-auto px-4">
+      {/* ─── Category Header ───────────────────────────────────────────────────────── */}
+      <div className="h-96">
+        <StarBackground
+          imageSrc="/fallback.avif"
+          text={category.name}
+          imageClassName="rounded-full h-[100px] w-[100px] mb-2"
+        />
       </div>
 
-      {/* ─── Blogs List ──────────────────────────────────────────────────── */}
-      <h2 className="text-2xl font-semibold mb-6">
-        Articles in “{category.name}”
-      </h2>
-      <div className="space-y-10">
+      {/* ─── Category’s Blogs List ─────────────────────────────────────────────────── */}
+      <div className="space-y-12">
         {blogs.map((blog) => (
           <Link
-            key={blog.id}
             href={`/blog/${blog.id}`}
-            className="
-              flex flex-col lg:flex-row gap-6
-              bg-gray-900 p-6 rounded-2xl
-              hover:bg-gray-800 transition-colors duration-200
-            "
+            key={blog.id}
+            className="grid xl:grid-cols-3 group border-b pb-5"
           >
-            {/* Thumbnail (desktop: fixed square; mobile: banner) */}
-            <div className="hidden lg:block w-[200px] h-[200px] relative flex-shrink-0">
+            {/* Desktop Image */}
+            <div className="hidden xl:flex justify-center">
               <Image
-                src={blog.image || "/fallback.jpg"}
+                src={blog.image?.trimEnd() || "/fallback.avif"}
                 alt={blog.title}
-                fill
-                className="rounded-2xl object-cover"
+                width={180}
+                height={180}
+                className="rounded-full object-cover w-[180px] h-[180px]"
               />
             </div>
-            <div className="lg:hidden w-full h-[180px] relative">
+
+            {/* Mobile/Tablet Image */}
+            <div className="w-full h-[200px] md:h-[400px] relative xl:hidden">
               <Image
-                src={blog.image || "/fallback.jpg"}
+                src={blog.image?.trimEnd() || "/fallback.avif"}
                 alt={blog.title}
                 fill
                 className="rounded-2xl object-cover"
@@ -64,19 +59,19 @@ export default async function CategoryDetailPage({
             </div>
 
             {/* Text Content */}
-            <div>
-              <h3 className="text-2xl font-bold mb-2 capitalize">
+            <div className="xl:col-span-2 xl:space-y-3 space-y-5">
+              <h2 className="text-2xl md:text-3xl font-extrabold capitalize">
                 {blog.title}
-              </h3>
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                <span>By {blog.author}</span>
-                <span>•</span>
+              </h2>
+              <div className="flex items-center gap-3 text-sm text-gray-300">
+                <span>{blog.author}</span>
+                <span>|</span>
                 <span>{new Date(blog.createdAt).toDateString()}</span>
               </div>
-              <p className="text-gray-400 line-clamp-2 mb-3">
+              <p className="text-lg text-gray-400 font-medium line-clamp-2">
                 {blog.description}
               </p>
-              <span className="inline-block bg-secondary rounded-full px-3 py-1 text-sm font-bold text-gray-300 capitalize">
+              <span className="inline-block bg-secondary rounded-full px-4 py-2 text-sm font-semibold text-gray-300 capitalize">
                 {blog.category}
               </span>
             </div>
