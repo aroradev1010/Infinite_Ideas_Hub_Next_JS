@@ -47,7 +47,9 @@ export default function BlogCard({ blog }: BlogCardProps) {
           <p className="text-lg text-gray-400 font-medium line-clamp-2">
             {blog.description}
           </p>
-          <SecondaryButton>{blog.category}</SecondaryButton>
+          <Link href={`/categories/${blog.category.toLowerCase()}`}>
+            <SecondaryButton>{blog.category}</SecondaryButton>
+          </Link>
         </div>
       </div>
     </Link>

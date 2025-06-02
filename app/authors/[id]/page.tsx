@@ -21,7 +21,7 @@ export default async function AuthorDetailPage({
   const blogs = await getBlogsByAuthor(author.name);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 ">
+    <div className=" ">
       {/* ─── Author Header ───────────────────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground
@@ -33,12 +33,12 @@ export default async function AuthorDetailPage({
 
       {/* ─── Author’s Blogs List ─────────────────────────────────────────────────── */}
 
-      <div className="space-y-12">
+      <div className="space-y-12 max-w-6xl mx-auto px-4">
         {blogs.map((blog) => (
-          <>
+          <div key={blog.id}>
             <BlogCard key={blog.id} blog={blog} />
             <div className="my-10" />
-          </>
+          </div>
         ))}
 
         {blogs.length === 0 && (

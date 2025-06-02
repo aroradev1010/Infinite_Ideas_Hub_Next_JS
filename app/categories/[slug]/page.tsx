@@ -18,7 +18,7 @@ export default async function CategoryDetailPage({
   const blogs = await getBlogsByCategory(category.name);
 
   return (
-    <div className="max-w-6xl mx-auto px-4">
+    <div className="">
       {/* ─── Category Header ───────────────────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground
@@ -29,12 +29,12 @@ export default async function CategoryDetailPage({
       </div>
 
       {/* ─── Category’s Blogs List ─────────────────────────────────────────────────── */}
-      <div className="space-y-12">
+      <div className="space-y-12 max-w-6xl mx-auto px-4">
         {blogs.map((blog) => (
-          <>
+          <div key={blog.id}>
             <BlogCard key={blog.id} blog={blog} />
             <div className="my-10" />
-          </>
+          </div>
         ))}
 
         {blogs.length === 0 && (

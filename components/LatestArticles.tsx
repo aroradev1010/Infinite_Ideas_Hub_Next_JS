@@ -12,10 +12,10 @@ export default async function LatestArticles() {
       </h1>
       <div className="space-y-14">
         {blogs.map((blog) => (
-          <>
+          <div key={blog.id}>
             <BlogCard key={blog.id} blog={blog} />
             <div className="my-10" />
-          </>
+          </div>
         ))}
       </div>
     </div>
