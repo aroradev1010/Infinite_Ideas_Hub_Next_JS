@@ -30,7 +30,7 @@ export default async function Home() {
           </div>
 
           {/* Sticky subscribe button on the right */}
-          <div className="hidden lg:block col-span-1">
+          <div className="hidden xl:block col-span-1">
             <div className="sticky top-10 ml-20">
               <SubscribeButton />
             </div>

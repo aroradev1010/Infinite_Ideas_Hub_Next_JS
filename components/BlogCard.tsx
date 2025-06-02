@@ -39,10 +39,16 @@ export default function BlogCard({ blog }: BlogCardProps) {
           <h2 className="text-2xl md:text-3xl font-extrabold capitalize">
             {blog.title}
           </h2>
-          <div className="flex items-center gap-3 text-sm text-gray-300">
-            <span>{blog.author}</span>
-            <span>|</span>
-            <span>{new Date(blog.createdAt).toDateString()}</span>
+          <div className="flex items-center gap-3 mb-5 text-md font-bold tracking-wider">
+            <span className="capitalize text-gray-400">By {blog.author}</span>
+            <span className="text-gray-700">/</span>
+            <span className="text-gray-400">
+              {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
           </div>
           <p className="text-lg text-gray-400 font-medium line-clamp-2">
             {blog.description}

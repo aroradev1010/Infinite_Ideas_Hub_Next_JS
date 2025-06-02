@@ -40,11 +40,15 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
             <h1 className="text-2xl md:text-3xl xl:text-3xl font-extrabold capitalize">
               {blog.title}
             </h1>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="capitalize">{blog.author}</span>
-              <span>|</span>
-              <span className="font-extralight">
-                {new Date(blog.createdAt).toLocaleDateString()}
+            <div className="flex items-center gap-3 mb-5 text-md font-bold tracking-wider">
+              <span className="capitalize text-gray-400">By {blog.author}</span>
+              <span className="text-gray-700">/</span>
+              <span className="text-gray-400">
+                {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </span>
             </div>
             <p className="text-xl font-medium text-gray-400 line-clamp-2">
