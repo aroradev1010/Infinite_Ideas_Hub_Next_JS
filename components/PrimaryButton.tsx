@@ -13,10 +13,7 @@ const PrimaryButton = ({
 }) => {
   return (
     <Button
-      className={cn(
-        `${className}`,
-        "text-white  cursor-pointer font-extrabold"
-      )}
+      className={cn(`${className}`, "text-white cursor-pointer font-extrabold")}
     >
       {text}
     </Button>

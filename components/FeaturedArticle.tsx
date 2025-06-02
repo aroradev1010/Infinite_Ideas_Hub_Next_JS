@@ -55,7 +55,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
               {blog.description}
             </p>
 
-            <SecondaryButton text={blog.category} />
+            <SecondaryButton>{blog.category}</SecondaryButton>
           </div>
         </div>
       </div>

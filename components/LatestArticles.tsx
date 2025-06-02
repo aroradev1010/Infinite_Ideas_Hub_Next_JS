@@ -54,7 +54,7 @@ export default async function LatestArticles() {
               <p className="text-lg text-gray-400 font-medium line-clamp-2">
                 {blog.description}
               </p>
-              <SecondaryButton text={blog.category} />
+              <SecondaryButton>{blog.category}</SecondaryButton>
             </div>
           </Link>
         ))}
