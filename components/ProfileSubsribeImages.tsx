@@ -6,28 +6,28 @@ const ProfileSubsribeImages = () => {
   return (
     <div className="flex items-center gap-2 ">
       <Image
-        src={"/fallback.jpg"}
+        src={"/fallback.avif"}
         alt=""
         width={50}
         height={50}
         className="rounded-full w-[50px] h-[50px] object-cover"
       />
       <Image
-        src={"/fallback.jpg"}
+        src={"/fallback.avif"}
         alt=""
         width={50}
         height={50}
         className="rounded-full w-[50px] h-[50px] object-cover"
       />
       <Image
-        src={"/fallback.jpg"}
+        src={"/fallback.avif"}
         alt=""
         width={50}
         height={50}
         className="rounded-full w-[50px] h-[50px] object-cover"
       />
       <Image
-        src={"/fallback.jpg"}
+        src={"/fallback.avif"}
         alt=""
         width={50}
         height={50}

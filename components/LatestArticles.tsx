@@ -23,7 +23,7 @@ export default async function LatestArticles() {
             {/* Desktop Image */}
             <div className="hidden xl:flex justify-center">
               <Image
-                src={blog.image.trimEnd() || "/fallback.jpg"}
+                src={blog.image.trimEnd() || "/fallback.avif"}
                 alt={blog.title}
                 width={180}
                 height={180}
@@ -34,7 +34,7 @@ export default async function LatestArticles() {
             {/* Mobile/Tablet Image */}
             <div className="w-full h-[200px] md:h-[400px] relative xl:hidden">
               <Image
-                src={blog.image.trimEnd() || "/fallback.jpg"}
+                src={blog.image.trimEnd() || "/fallback.avif"}
                 alt={blog.title}
                 fill
                 className="rounded-2xl object-cover"

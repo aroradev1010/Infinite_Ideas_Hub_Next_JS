@@ -19,7 +19,7 @@ export const Navbar = () => {
   };
 
   return (
-    <div className="lg:mx-auto lg:w-4/5 xl:w-5/6">
+    <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between py-4 px-4 relative">
         <div>
           <Link
@@ -83,7 +83,7 @@ const NavItem = ({
   name: string;
   href: string;
   className?: string;
-  toggleMenu: () => void;
+  toggleMenu?: () => void;
 }) => {
   return (
     <li>

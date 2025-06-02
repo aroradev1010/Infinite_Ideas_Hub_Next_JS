@@ -23,7 +23,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
         <div className="grid xl:grid-cols-5 gap-10 ">
           <div className="hidden xl:block col-span-2">
             <Image
-              src={blog.image.trimEnd() || "/fallback.jpg"}
+              src={blog.image.trimEnd() || "/fallback.avif"}
               alt={blog.title}
               width={430}
               height={250}
@@ -34,7 +34,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
           {/* Image for small to md screens */}
           <div className="w-full h-[200px] md:h-[400px] relative xl:hidden">
             <Image
-              src={blog.image.trimEnd() || "/fallback.jpg"}
+              src={blog.image.trimEnd() || "/fallback.avif"}
               alt={blog.title}
               className="rounded-2xl object-cover"
               fill

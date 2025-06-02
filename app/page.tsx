@@ -16,14 +16,14 @@ export default async function Home() {
           text="Thoughts, stories and ideas."
         />
       </div>
-      <div className="lg:mx-auto lg:w-4/5 xl:w-5/6">
+      <div className="max-w-7xl mx-auto">
         {featuredBlog ? (
           <FeaturedArticle blog={featuredBlog} />
         ) : (
           <p className="text-center py-10 text-gray-500">No article found.</p>
         )}
       </div>
-      <div className="lg:mx-auto lg:w-4/5 xl:w-5/6">
+      <div className="max-w-7xl mx-auto">
         <div className="xl:grid xl:grid-cols-3 xl:gap-4">
           <div className="xl:col-span-2">
             <LatestArticles />
