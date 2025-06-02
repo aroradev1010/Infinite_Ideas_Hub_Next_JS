@@ -11,11 +11,7 @@ interface Props {
 
 const Featuredblog: React.FC<Props> = ({ blog }) => {
   return (
-    <Link
-      href={`/blog/${blog.id}`}
-      passHref
-      className="block hover:opacity-90 transition-opacity duration-300"
-    >
+    <Link href={`/blog/${blog.id}`} passHref>
       <div className="my-10 w-full border-b pb-7 px-10 xl:px-0">
         <h1 className="font-bold text-md px-4 mb-5 uppercase tracking-wider">
           Featured blog
