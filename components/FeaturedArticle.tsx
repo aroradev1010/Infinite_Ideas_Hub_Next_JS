@@ -41,7 +41,9 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
               {blog.title}
             </h1>
             <div className="flex items-center gap-3 mb-5 text-md font-bold tracking-wider">
-              <span className="capitalize text-gray-400">By {blog.author}</span>
+              <span className="capitalize text-gray-400 hover:text-primary">
+                By {blog.author}
+              </span>
               <span className="text-gray-700">/</span>
               <span className="text-gray-400">
                 {new Date(blog.createdAt).toLocaleDateString("en-US", {

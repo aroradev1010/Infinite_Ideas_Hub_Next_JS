@@ -40,8 +40,17 @@ export default function BlogCard({ blog }: BlogCardProps) {
           </h2>
         </Link>
         <div className="flex items-center gap-3 mb-3 text-md font-bold tracking-wider">
-          <Link href={`/authors/${blog.author}`}>
-            <span className="capitalize text-gray-400">By {blog.author}</span>
+          <Link
+            href={`/authors/${blog.author
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9\s-]/g, "") // remove invalid characters
+              .replace(/\s+/g, "-") // replace spaces with -
+              .replace(/-+/g, "-")}`}
+          >
+            <span className="capitalize text-gray-400 hover:text-primary">
+              By {blog.author}
+            </span>
           </Link>
           <Link href={`/blog/${blog.slug}`} key={blog.id}>
             <span className="text-gray-700">/</span>

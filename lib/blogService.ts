@@ -109,3 +109,37 @@ export async function getBlogsByCategory(
     return [];
   }
 }
+
+export async function getNextOrOldestBlog(
+  currentBlogDate: Date
+): Promise<Blog | null> {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+
+    // Try to find the next newer blog
+    const nextBlog = await db
+      .collection("blogs")
+      .find({ createdAt: { $gt: currentBlogDate } })
+      .sort({ createdAt: 1 })
+      .limit(1)
+      .toArray();
+
+    if (nextBlog.length > 0) {
+      return transformBlog(nextBlog[0]);
+    }
+
+    // If no newer blog exists, return the oldest blog (excluding current)
+    const oldestBlog = await db
+      .collection("blogs")
+      .find({ createdAt: { $ne: currentBlogDate } })
+      .sort({ createdAt: 1 })
+      .limit(1)
+      .toArray();
+
+    return oldestBlog.length > 0 ? transformBlog(oldestBlog[0]) : null;
+  } catch (error) {
+    console.error("Error fetching next or oldest blog:", error);
+    return null;
+  }
+}
