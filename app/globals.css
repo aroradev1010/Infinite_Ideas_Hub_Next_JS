@@ -199,3 +199,14 @@ body {
   @apply bg-gray-500;
 }
 
+
+.blogDescriptionError img,
+.blogDescriptionError iframe,
+.blogDescriptionError pre,
+.blogDescriptionError code {
+  max-width: 100%;
+  overflow: hidden;
+  word-break: break-word;
+  white-space: pre-wrap;
+  display: block;
+}

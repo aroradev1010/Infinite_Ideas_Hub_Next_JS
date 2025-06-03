@@ -64,10 +64,17 @@ export default function BlogCard({ blog }: BlogCardProps) {
           </Link>
         </div>
         <Link href={`/blog/${blog.slug}`} key={blog.id}>
-          <div
-            className="tracking-wide line-clamp-3 text-gray-400 mb-5"
-            dangerouslySetInnerHTML={{ __html: blog && blog.description }}
-          ></div>
+          <div className="tracking-wide text-gray-400 mb-5 overflow-hidden">
+            <div
+              className="line-clamp-3 max-h-[6em] overflow-hidden text-ellipsis blogDescriptionError"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+              }}
+              dangerouslySetInnerHTML={{ __html: blog?.description }}
+            ></div>
+          </div>
         </Link>
         <Link href={`/categories/${blog.category.toLowerCase()}`}>
           <SecondaryButton>{blog.category}</SecondaryButton>

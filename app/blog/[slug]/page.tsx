@@ -61,7 +61,7 @@ export default async function BlogPage({
           </h1>
           <Link
             href={`/blog/${nextBlog.slug}`}
-            className="flex items-start gap-8 rounded-xl p-5 border-1"
+            className="flex items-start gap-8 flex-col md:flex-row rounded-xl p-5 border-1"
           >
             <div className="w-[150px] h-[100px] relative flex-shrink-0">
               <Image
@@ -76,7 +76,7 @@ export default async function BlogPage({
                 {nextBlog.title}
               </h2>
               <div
-                className="tracking-wide line-clamp-3 text-gray-400 mb-5 "
+                className="tracking-wide line-clamp-3 text-gray-400 mb-5 blogDescriptionError"
                 dangerouslySetInnerHTML={{
                   __html: nextBlog && nextBlog.description,
                 }}

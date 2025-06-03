@@ -6,7 +6,7 @@ export default async function LatestArticles() {
   const blogs = await getAllBlogs();
 
   return (
-    <div className="my-10 pr-5 w-full border-r px-10 xl:pr-10">
+    <div className="my-10  w-full border-r px-10 xl:pr-10">
       <h1 className="font-bold text-md px-4 mb-10 uppercase tracking-wider">
         Latest Articles
       </h1>

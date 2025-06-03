@@ -16,7 +16,7 @@ const page = async () => {
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="max-w-7xl mx-auto px-4  py-10">
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 perspective-[1200px]">
           {authors.map((author) => (
             <Link
