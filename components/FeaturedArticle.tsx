@@ -55,9 +55,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
               {blog.description}
             </p>
 
-            <Link href={`/categories/${blog.category.toLowerCase()}`}>
-              <SecondaryButton>{blog.category}</SecondaryButton>
-            </Link>
+            <SecondaryButton>{blog.category}</SecondaryButton>
           </div>
         </div>
       </div>

@@ -4,4 +4,5 @@ export interface Author {
   bio: string;
   profileImage: string;
   createdAt: string;
+  slug: string;
 }

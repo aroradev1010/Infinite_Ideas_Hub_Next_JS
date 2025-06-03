@@ -6,4 +6,5 @@ export const transformAuthor = (doc: any): Author => ({
   bio: doc.bio,
   profileImage: doc.profileImage,
   createdAt: new Date(doc.createdAt).toISOString(),
+  slug: doc.slug, // new
 });

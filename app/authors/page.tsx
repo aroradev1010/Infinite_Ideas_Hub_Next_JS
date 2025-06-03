@@ -21,7 +21,7 @@ const page = async () => {
           {authors.map((author) => (
             <Link
               key={author.id}
-              href={`/authors/${author.id}`}
+              href={`/authors/${author.slug}`}
               className="relative group xl:w-[400px] cursor-pointer"
             >
               {/* ─── Card ───────────────────── */}

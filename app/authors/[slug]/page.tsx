@@ -1,23 +1,19 @@
 // app/authors/[id]/page.tsx
 import BlogCard from "@/components/BlogCard";
 import StarBackground from "@/components/StarBackground";
-import { getAuthorById } from "@/lib/authorService";
+import { getAuthorBySlug } from "@/lib/authorService";
 import { getBlogsByAuthor } from "@/lib/blogService";
 import { notFound } from "next/navigation";
 
 export default async function AuthorDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  // 1️⃣ Await params (Next.js App Router requirement)
-  const { id } = await params;
-
-  // 2️⃣ Fetch author details
-  const author = await getAuthorById(id);
+  const { slug } = await params;
+  const author = await getAuthorBySlug(slug);
   if (!author) return notFound();
 
-  // 3️⃣ Fetch all blogs by this author
   const blogs = await getBlogsByAuthor(author.name);
 
   return (
