@@ -9,7 +9,7 @@ export default async function CategoriesPage() {
   const categories = await getAllCategories();
 
   return (
-    <div className="my-20">
+    <div className="h-screen">
       {/* ─── Header / Hero Section ───────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground

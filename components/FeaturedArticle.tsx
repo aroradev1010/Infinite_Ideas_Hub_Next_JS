@@ -53,9 +53,10 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
                 })}
               </span>
             </div>
-            <p className="text-xl font-medium text-gray-400 line-clamp-2">
-              {blog.description}
-            </p>
+            <div
+              className="tracking-wide line-clamp-4 text-gray-400"
+              dangerouslySetInnerHTML={{ __html: blog && blog.description }}
+            ></div>
 
             <SecondaryButton>{blog.category}</SecondaryButton>
           </div>

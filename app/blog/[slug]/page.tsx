@@ -38,6 +38,9 @@ export default async function BlogPage({
           </span>
         </Link>
       </div>
+      <h1 className="text-4xl font-bold my-5 capitalize tracking-wide leading-14">
+        {blog.title}
+      </h1>
       <Image
         src={blog.image.trimEnd() || "/fallback.avif"}
         alt={blog.title}
@@ -45,11 +48,11 @@ export default async function BlogPage({
         height={800}
         className="rounded-xl object-cover w-full h-[500px] mb-8"
       />
-      <h1 className="text-4xl font-bold mb-4 capitalize">{blog.title}</h1>
 
-      <p className="text-2xl text-gray-400 leading-relaxed mt-6">
-        {blog.description}
-      </p>
+      <div
+        className="tracking-wide blogDescription"
+        dangerouslySetInnerHTML={{ __html: blog && blog.description }}
+      ></div>
 
       {nextBlog && (
         <div className="my-20">
@@ -58,7 +61,7 @@ export default async function BlogPage({
           </h1>
           <Link
             href={`/blog/${nextBlog.slug}`}
-            className="flex items-center gap-8 rounded-xl p-5 border-1"
+            className="flex items-start gap-8 rounded-xl p-5 border-1"
           >
             <div className="w-[150px] h-[100px] relative flex-shrink-0">
               <Image
@@ -68,13 +71,16 @@ export default async function BlogPage({
                 className="rounded-xl object-cover"
               />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-hidden">
               <h2 className="text-white font-extrabold text-xl">
                 {nextBlog.title}
               </h2>
-              <p className="text-gray-400 font-extrabold text-md line-clamp-2">
-                {nextBlog.description}
-              </p>
+              <div
+                className="tracking-wide line-clamp-3 text-gray-400 mb-5 "
+                dangerouslySetInnerHTML={{
+                  __html: nextBlog && nextBlog.description,
+                }}
+              ></div>
             </div>
           </Link>
         </div>

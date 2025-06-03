@@ -18,7 +18,7 @@ export default async function CategoryDetailPage({
   const blogs = await getBlogsByCategory(category.name);
 
   return (
-    <div className="mb-20">
+    <div className="h-screen">
       {/* ─── Category Header ───────────────────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground

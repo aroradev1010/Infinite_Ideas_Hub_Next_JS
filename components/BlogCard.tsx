@@ -39,7 +39,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
             {blog.title}
           </h2>
         </Link>
-        <div className="flex items-center gap-3 mb-3 text-md font-bold tracking-wider">
+        <div className="mb-3 text-md font-bold tracking-wider">
           <Link
             href={`/authors/${blog.author
               .toLowerCase()
@@ -53,7 +53,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
             </span>
           </Link>
           <Link href={`/blog/${blog.slug}`} key={blog.id}>
-            <span className="text-gray-700">/</span>
+            <span className="text-gray-700 mx-3">/</span>
             <span className="text-gray-400">
               {new Date(blog.createdAt).toLocaleDateString("en-US", {
                 month: "short",
@@ -64,9 +64,10 @@ export default function BlogCard({ blog }: BlogCardProps) {
           </Link>
         </div>
         <Link href={`/blog/${blog.slug}`} key={blog.id}>
-          <p className="text-lg text-gray-400 font-medium line-clamp-2 mb-5">
-            {blog.description}
-          </p>
+          <div
+            className="tracking-wide line-clamp-3 text-gray-400 mb-5"
+            dangerouslySetInnerHTML={{ __html: blog && blog.description }}
+          ></div>
         </Link>
         <Link href={`/categories/${blog.category.toLowerCase()}`}>
           <SecondaryButton>{blog.category}</SecondaryButton>

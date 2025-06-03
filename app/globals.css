@@ -123,3 +123,79 @@
 body {
   font-family: var(--font-nunito);
 }
+
+.blogDescription h1 {
+  @apply text-2xl font-bold mb-5 text-white;
+}
+
+.blogDescription p {
+  @apply tracking-widest leading-8 text-xl text-gray-400 mb-6;
+}
+
+.blogDescription ul {
+  @apply list-disc list-inside pl-6 mb-6 text-gray-300 text-lg;
+}
+
+.blogDescription ol {
+  @apply list-decimal list-inside pl-6 mb-6 text-gray-300 text-lg;
+}
+
+.blogDescription li {
+  @apply mb-2;
+}
+
+.blogDescription a {
+  @apply text-sky-400 underline hover:text-sky-300;
+}
+
+.blogDescription code {
+  @apply bg-gray-900 text-white px-1 py-0.5 rounded font-mono text-xl;
+}
+
+.blogDescription pre {
+  @apply bg-gray-900 text-gray-100 p-4 my-6 rounded-lg overflow-x-auto text-sm leading-relaxed;
+}
+
+.blogDescription hr {
+  @apply border-t border-gray-700 my-10;
+}
+
+.blogDescription strong {
+  @apply font-semibold text-white;
+}
+
+
+.blogDescription::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.blogDescription::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+.blogDescription::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded;
+}
+
+.blogDescription::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* For horizontal scroll inside code blocks */
+.blogDescription pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.blogDescription pre::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+.blogDescription pre::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded;
+}
+
+.blogDescription pre::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
