@@ -1,11 +1,14 @@
-import { getBlogById } from "@/lib/blogService";
+import { getBlogBySlug } from "@/lib/blogService";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
-export default async function BlogPage({ params }: { params: { id: string } }) {
-  const resolvedParams = await params;
-  const blog = await getBlogById(resolvedParams.id);
-
+export default async function BlogPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const blog = await getBlogBySlug(slug);
   if (!blog) return notFound();
 
   return (

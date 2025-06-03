@@ -1,4 +1,3 @@
-// lib/blogService.ts
 import clientPromise from "./mongodb";
 import { transformBlog } from "@/models/blogModel";
 import { Blog } from "@/types/blogType";
@@ -22,6 +21,21 @@ export async function getFeaturedBlog(): Promise<Blog | null> {
   }
 }
 
+// ✅ New: Get blog by slug (used in [slug]/page.tsx)
+export async function getBlogBySlug(slug: string): Promise<Blog | null> {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    const blog = await db.collection("blogs").findOne({ slug });
+
+    return blog ? transformBlog(blog) : null;
+  } catch (error) {
+    console.error("Failed to fetch blog by slug:", error);
+    return null;
+  }
+}
+
+// ✅ Optional: Keep this only if you still use ID anywhere
 export async function getBlogById(id: string): Promise<Blog | null> {
   if (!ObjectId.isValid(id)) {
     console.error("Invalid blog id:", id);
@@ -50,7 +64,7 @@ export async function getAllBlogs(): Promise<Blog[]> {
     const blogs = await db
       .collection("blogs")
       .find({})
-      .sort({ createdAt: -1 }) // Sort by newest
+      .sort({ createdAt: -1 })
       .toArray();
 
     return blogs.map(transformBlog);

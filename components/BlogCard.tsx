@@ -11,7 +11,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
   return (
     <div className="grid xl:grid-cols-3 gap-5 group">
       {/* Desktop Image (circular) */}
-      <Link href={`/blog/${blog.id}`} key={blog.id}>
+      <Link href={`/blog/${blog.slug}`} key={blog.id}>
         <div className="hidden xl:flex justify-center">
           <Image
             src={blog.image.trimEnd() || "/fallback.avif"}
@@ -34,7 +34,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
       </Link>
       {/* Text Content */}
       <div className="xl:col-span-2">
-        <Link href={`/blog/${blog.id}`}>
+        <Link href={`/blog/${blog.slug}`}>
           <h2 className="text-2xl md:text-3xl font-extrabold capitalize mb-3">
             {blog.title}
           </h2>
@@ -43,7 +43,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
           <Link href={`/authors/${blog.author}`}>
             <span className="capitalize text-gray-400">By {blog.author}</span>
           </Link>
-          <Link href={`/blog/${blog.id}`} key={blog.id}>
+          <Link href={`/blog/${blog.slug}`} key={blog.id}>
             <span className="text-gray-700">/</span>
             <span className="text-gray-400">
               {new Date(blog.createdAt).toLocaleDateString("en-US", {
@@ -54,7 +54,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
             </span>
           </Link>
         </div>
-        <Link href={`/blog/${blog.id}`} key={blog.id}>
+        <Link href={`/blog/${blog.slug}`} key={blog.id}>
           <p className="text-lg text-gray-400 font-medium line-clamp-2 mb-5">
             {blog.description}
           </p>
