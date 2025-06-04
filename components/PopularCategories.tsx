@@ -31,7 +31,7 @@ const PopularCategories = async () => {
             className="flex items-center gap-3 hover:opacity-70 transition-opacity"
           >
             <Image
-              src={"/fallback.avif"}
+              src={category.categoryImage || "/fallback.avif"}
               alt={category.name}
               width={36}
               height={36}
