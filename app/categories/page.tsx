@@ -14,8 +14,8 @@ export default async function CategoriesPage() {
       <div className="h-96">
         <StarBackground
           imageSrc="/categoriesPage.webp"
-          text="Categories"
-          imageClassName="rounded-full h-[100px] w-[100px] mb-2"
+          text=""
+          imageClassName="rounded-full h-[150px] w-[150px] mb-2"
         />
       </div>
 

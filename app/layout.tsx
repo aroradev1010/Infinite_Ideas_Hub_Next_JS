@@ -24,10 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${nunito.variable} antialiased dark`}>
         <Navbar />
-        <div className="z-0 mb-20page">{children}</div>
-        <div className="mt-20">
-          <Footer />
-        </div>
+        <div className="z-0 mb-20 page">{children}</div>
+
+        {/* <Footer /> */}
       </body>
     </html>
   );
