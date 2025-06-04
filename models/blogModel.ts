@@ -8,5 +8,6 @@ export const transformBlog = (doc: any): Blog => ({
   author: doc.author,
   category: doc.category,
   createdAt: new Date(doc.createdAt).toISOString(),
-  slug: doc.slug, // newly added
+  slug: doc.slug, 
+  likes: doc.likes || 0,
 });

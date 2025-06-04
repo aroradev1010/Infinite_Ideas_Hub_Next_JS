@@ -7,4 +7,5 @@ export interface Blog {
   category: string;
   createdAt: string;
   slug: string;
+  likes?: number; 
 }
