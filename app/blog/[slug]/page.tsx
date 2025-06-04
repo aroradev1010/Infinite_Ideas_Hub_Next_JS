@@ -3,15 +3,19 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "@/components/LikeButton";
+import CommentSection from "@/components/CommentSection";
 export default async function BlogPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
+
   const { slug } = await params;
   const blog = await getBlogBySlug(slug);
   if (!blog) return notFound();
   const nextBlog = await getNextOrOldestBlog(new Date(blog.createdAt));
+  const blogId = blog.id.toString();
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -91,6 +95,7 @@ export default async function BlogPage({
           </Link>
         </div>
       )}
+      <CommentSection blogId={blogId} />
     </div>
   );
 }
