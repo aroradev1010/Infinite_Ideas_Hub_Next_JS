@@ -10,7 +10,7 @@ export async function getFeaturedBlog(): Promise<Blog | null> {
     const blog = await db
       .collection("blogs")
       .find({})
-      .sort({ createdAt: -1 })
+      .sort({ likes: -1 })
       .limit(1)
       .toArray();
 
