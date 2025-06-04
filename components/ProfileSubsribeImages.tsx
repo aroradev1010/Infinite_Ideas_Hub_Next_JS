@@ -7,28 +7,28 @@ const ProfileSubsribeImages = () => {
     <div className="flex items-center gap-2 ">
       <div className="flex -space-x-4 ">
         <Image
-          src={"/fallback.avif"}
+          src={"/profileSubscribeAvatarImage1.webp"}
           alt=""
           width={50}
           height={50}
           className="rounded-full w-[50px] h-[50px] object-cover"
         />
         <Image
-          src={"/fallback.avif"}
+          src={"/profileSubscribeAvatarImage2.webp"}
           alt=""
           width={50}
           height={50}
           className="rounded-full w-[50px] h-[50px] object-cover"
         />
         <Image
-          src={"/fallback.avif"}
+          src={"/profileSubscribeAvatarImage3.webp"}
           alt=""
           width={50}
           height={50}
           className="rounded-full w-[50px] h-[50px] object-cover"
         />
         <Image
-          src={"/fallback.avif"}
+          src={"/profileSubscribeAvatarImage4.webp"}
           alt=""
           width={50}
           height={50}

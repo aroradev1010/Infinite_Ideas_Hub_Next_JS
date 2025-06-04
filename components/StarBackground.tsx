@@ -169,7 +169,7 @@ const StarBackground = ({
           alt="Header Image"
           width={150}
           height={50}
-          className={cn(imageClassName, "")}
+          className={cn(imageClassName, "object-cover")}
         />
         <h1 className="md:text-3xl text-xl font-bold text-white dark:text-gray-100 capitalize">
           {text}

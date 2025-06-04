@@ -13,8 +13,8 @@ export default async function Home() {
     <div>
       <div className="h-96">
         <StarBackground
-          imageSrc="/headerImage.png"
-          text="Thoughts, stories and ideas."
+          imageSrc="/headerImage.webp"
+          text=""
         />
       </div>
       <div className="max-w-7xl mx-auto xl:px-10">

@@ -19,14 +19,14 @@ export default function SubscribePage() {
       <div className="relative w-full h-96 md:h-[500px] lg:h-[600px] overflow-hidden rounded-lg">
         {/* Background Image */}
         <Image
-          src="/fallback.jpg" // replace with your actual background image
+          src="/subscribePage.webp" // replace with your actual background image
           alt="Subscribe Background"
           fill
           className="object-cover"
         />
 
         {/* Gradient Overlay at bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/90" />
 
         {/* 3. Centered Subscribe Button Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4">

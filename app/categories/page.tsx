@@ -13,7 +13,7 @@ export default async function CategoriesPage() {
       {/* ─── Header / Hero Section ───────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground
-          imageSrc="/fallback.avif"
+          imageSrc="/categoriesPage.webp"
           text="Categories"
           imageClassName="rounded-full h-[100px] w-[100px] mb-2"
         />

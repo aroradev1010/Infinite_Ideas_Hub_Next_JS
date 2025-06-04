@@ -7,10 +7,10 @@ import React from "react";
 const page = async () => {
   const authors = await getAllAuthors();
   return (
-    <div className="">
+    <div className="h-screen">
       <div className="h-96">
         <StarBackground
-          imageSrc="/fallback.avif"
+          imageSrc="/authorsPage.webp"
           text="Authors"
           imageClassName="rounded-full h-[100px] w-[100px] mb-2"
         />
