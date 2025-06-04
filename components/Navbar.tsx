@@ -43,10 +43,12 @@ export const Navbar = () => {
         </ul>
 
         <div className="flex gap-3 items-center">
-          <PrimaryButton
-            className="uppercase md:text-[15px] font-extrabold px-5 tracking-wider hidden sm:flex"
-            text="Subscribe"
-          />
+          <Link href="/subscribe">
+            <PrimaryButton
+              className="uppercase md:text-[15px] font-extrabold px-5 tracking-wider hidden sm:flex"
+              text="Subscribe"
+            />
+          </Link>
           <SecondaryButton
             className="bg-secondary hover:bg-secondary/60 text-white rounded-full p-2 xl:hidden"
             onClick={toggleMenu}
