@@ -29,7 +29,7 @@ export default async function AuthorDetailPage({
 
       {/* ─── Author’s Blogs List ─────────────────────────────────────────────────── */}
 
-      <div className="space-y-20 max-w-6xl mx-auto px-4">
+      <div className="space-y-20 max-w-6xl mx-auto px-4 mt-10">
         {blogs.map((blog) => (
           <div key={blog.id}>
             <BlogCard
