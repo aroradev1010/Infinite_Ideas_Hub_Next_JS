@@ -5,9 +5,13 @@ import { Blog } from "@/types/blogType";
 
 interface BlogCardProps {
   blog: Blog;
+  classNameDesktopImage?: string;
 }
 
-export default function BlogCard({ blog }: BlogCardProps) {
+export default function BlogCard({
+  blog,
+  classNameDesktopImage,
+}: BlogCardProps) {
   return (
     <div className="grid xl:grid-cols-3 gap-5 group">
       {/* Desktop Image (circular) */}
@@ -18,7 +22,10 @@ export default function BlogCard({ blog }: BlogCardProps) {
             alt={blog.title}
             width={180}
             height={180}
-            className="rounded-full object-cover w-[180px] h-[180px]"
+            className={
+              `rounded-full object-cover w-[180px] h-[180px]` +
+              ` ${classNameDesktopImage}`
+            }
           />
         </div>
 

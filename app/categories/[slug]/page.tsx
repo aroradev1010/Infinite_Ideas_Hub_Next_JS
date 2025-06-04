@@ -32,7 +32,11 @@ export default async function CategoryDetailPage({
       <div className="space-y-12 max-w-6xl mx-auto px-4">
         {blogs.map((blog) => (
           <div key={blog.id}>
-            <BlogCard key={blog.slug} blog={blog} />
+            <BlogCard
+              key={blog.slug}
+              blog={blog}
+              classNameDesktopImage="w-full rounded-xl h-[250px]"
+            />
             <div className="my-10" />
           </div>
         ))}

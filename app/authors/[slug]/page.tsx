@@ -29,10 +29,14 @@ export default async function AuthorDetailPage({
 
       {/* ─── Author’s Blogs List ─────────────────────────────────────────────────── */}
 
-      <div className="space-y-12 max-w-6xl mx-auto px-4">
+      <div className="space-y-20 max-w-6xl mx-auto px-4">
         {blogs.map((blog) => (
           <div key={blog.id}>
-            <BlogCard key={blog.slug} blog={blog} />
+            <BlogCard
+              key={blog.slug}
+              blog={blog}
+              classNameDesktopImage="w-full rounded-xl h-[250px]"
+            />
             <div className="my-10" />
           </div>
         ))}
