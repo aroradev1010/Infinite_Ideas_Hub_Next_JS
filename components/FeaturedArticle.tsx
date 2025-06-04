@@ -12,11 +12,11 @@ interface Props {
 const Featuredblog: React.FC<Props> = ({ blog }) => {
   return (
     <Link href={`/blog/${blog.slug}`} passHref>
-      <div className="my-10 w-full border-b pb-7 px-10 xl:px-0">
+      <div className="my-10 border-b pb-7 px-10 xl:px-0">
         <h1 className="font-bold text-md px-4 mb-5 uppercase tracking-wider">
           Featured blog
         </h1>
-        <div className="grid xl:grid-cols-5 gap-10 ">
+        <div className="grid xl:grid-cols-5 gap-10">
           <div className="hidden xl:block col-span-2">
             <Image
               src={blog.image.trimEnd() || "/fallback.avif"}
@@ -54,7 +54,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
               </span>
             </div>
             <div
-              className="tracking-wide line-clamp-4 text-gray-400"
+              className="tracking-wide line-clamp-4 text-gray-400 blogDescriptionError"
               dangerouslySetInnerHTML={{ __html: blog && blog.description }}
             ></div>
 
