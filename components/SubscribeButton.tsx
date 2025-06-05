@@ -39,18 +39,15 @@ export default function SubscribeButton({
 
       if (res.ok) {
         if (data.already) {
-          toast("You have already subscribed to our newsletter.", {
-            description: "",
-            variant: "warning",
-          });
+          toast("You have already subscribed.");
         } else {
           toast("Confirmation Email Sent", {
-            description: `A confirmation email has been sent to ${email}.`,
+            description: `Check ${email} for confirmation.`,
           });
         }
         setEmail("");
       } else {
-        toast.error(data.error || "Failed to subscribe.");
+        toast.error(data.error || "Failed to start subscription.");
       }
     } catch (err) {
       console.error(err);
@@ -78,7 +75,6 @@ export default function SubscribeButton({
         <PrimaryButton
           text={loading ? "Sending..." : "Subscribe"}
           type="button"
-          className=""
           onClick={handleSubscribe}
         />
       </div>

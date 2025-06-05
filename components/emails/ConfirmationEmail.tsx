@@ -11,7 +11,15 @@ import {
   Button as EmailButton,
 } from "@react-email/components";
 
-export const ConfirmationEmail = () => (
+interface ConfirmationEmailProps {
+  email: string;
+  confirmUrl: string;
+}
+
+export const ConfirmationEmail: React.FC<ConfirmationEmailProps> = ({
+  email,
+  confirmUrl,
+}) => (
   <Html>
     <Head />
     <Preview>Confirm your newsletter subscription</Preview>
@@ -23,11 +31,10 @@ export const ConfirmationEmail = () => (
           borderRadius: "5px",
         }}
       >
+        <Text style={{ fontSize: "16px", marginBottom: "12px" }}>Hello,</Text>
         <Text style={{ fontSize: "16px", marginBottom: "12px" }}>
-          Hi there,
-        </Text>
-        <Text style={{ fontSize: "16px", marginBottom: "12px" }}>
-          Thank you for subscribing to our newsletter!
+          You asked to subscribe with <strong>{email}</strong>. Please confirm
+          by clicking the button below:
         </Text>
         <EmailButton
           style={{
@@ -39,7 +46,7 @@ export const ConfirmationEmail = () => (
             marginBottom: "12px",
             padding: "12px 20px",
           }}
-          href="/" // replace "#" with your actual confirmation link if needed
+          href={confirmUrl}
         >
           Confirm Subscription
         </EmailButton>

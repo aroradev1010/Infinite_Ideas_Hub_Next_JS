@@ -5,17 +5,16 @@ import { getFeaturedBlog } from "@/lib/blogService";
 import LatestArticles from "@/components/LatestArticles";
 import SubscribeButton from "@/components/SubscribeButton";
 import PopularCategories from "@/components/PopularCategories";
+import SubscriptionToast from "@/components/SubscriptionToast";
 
 export default async function Home() {
   const featuredBlog = await getFeaturedBlog();
 
   return (
     <div>
+      <SubscriptionToast />
       <div className="h-96">
-        <StarBackground
-          imageSrc="/headerImage.webp"
-          text=""
-        />
+        <StarBackground imageSrc="/headerImage.webp" text="" />
       </div>
       <div className="max-w-7xl mx-auto xl:px-10">
         {featuredBlog ? (

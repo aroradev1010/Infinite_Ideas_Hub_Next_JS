@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
 import { Resend } from "resend";
 import { ConfirmationEmail } from "@/components/emails/ConfirmationEmail";
+import { v4 as uuidv4 } from "uuid";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const client = new MongoClient(process.env.MONGODB_URI!);
@@ -18,35 +19,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1️⃣ Connect to MongoDB
     await client.connect();
     const db = client.db(process.env.MONGODB_DB);
     const subscribers = db.collection("subscribers");
+    const pending = db.collection("pendingSubscribers");
 
-    // 2️⃣ Check if already subscribed
-    const existing = await subscribers.findOne({ email });
-    if (existing) {
-      return NextResponse.json({
-        already: true,
-        message: "Already subscribed",
+    // If already fully subscribed:
+    const already = await subscribers.findOne({ email });
+    if (already) {
+      return NextResponse.json({ already: true });
+    }
+
+    // If there's an existing pending token, reuse it (or optionally delete & recreate)
+    let existingPending = await pending.findOne({ email });
+    let token: string;
+    if (existingPending) {
+      token = existingPending.token;
+    } else {
+      token = uuidv4();
+      await pending.insertOne({
+        email,
+        token,
+        createdAt: new Date(),
       });
     }
 
-    // 3️⃣ Insert into subscribers collection
-    await subscribers.insertOne({ email, subscribedAt: new Date() });
+    // Send confirmation email
+    const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/confirmSubscription?token=${token}`;
 
-    // 4️⃣ Send confirmation email (using "onboarding@resend.dev" test address)
     await resend.emails.send({
-      from: "Your Name <onboarding@resend.dev>",
+      from: "Your App <onboarding@resend.dev>",
       to: [email],
-      subject: "Please Confirm Your Subscription",
-      react: ConfirmationEmail(),
+      subject: "Confirm your subscription",
+      react: await ConfirmationEmail({ email, confirmUrl }),
     });
 
-    return NextResponse.json({
-      already: false,
-      message: "Confirmation email sent",
-    });
+    return NextResponse.json({ already: false });
   } catch (err) {
     console.error("Error in send-subscribe:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
