@@ -21,7 +21,7 @@ export default async function CategoriesPage() {
 
       {/* ─── Categories Grid ─────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 perspective-[1200px]">
+        <div className="flex flex-wrap flex-col md:flex-row gap-10 justify-center">
           {categories.map((cat) => (
             <Link
               key={cat.id}
