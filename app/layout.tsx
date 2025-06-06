@@ -26,8 +26,8 @@ export default function RootLayout({
       <body className={`${nunito.variable} antialiased dark`}>
         <Navbar />
         <div className="z-0 mb-20 page">
+          <Toaster position="top-center" />
           {children}
-          <Toaster />
         </div>
 
         {/* <Footer /> */}

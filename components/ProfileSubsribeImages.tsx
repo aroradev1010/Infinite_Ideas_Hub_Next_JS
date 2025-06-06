@@ -11,28 +11,28 @@ const ProfileSubsribeImages = () => {
           alt=""
           width={50}
           height={50}
-          className="rounded-full w-[50px] h-[50px] object-cover"
+          className="rounded-full md:w-[50px] md:h-[50px] h-[30px] w-[30px] object-cover"
         />
         <Image
           src={"/profileSubscribeAvatarImage2.webp"}
           alt=""
           width={50}
           height={50}
-          className="rounded-full w-[50px] h-[50px] object-cover"
+          className="rounded-full md:w-[50px] md:h-[50px] object-cover h-[30px] w-[30px]"
         />
         <Image
           src={"/profileSubscribeAvatarImage3.webp"}
           alt=""
           width={50}
           height={50}
-          className="rounded-full w-[50px] h-[50px] object-cover"
+          className="rounded-full md:w-[50px] md:h-[50px] object-cover h-[30px] w-[30px]"
         />
         <Image
           src={"/profileSubscribeAvatarImage4.webp"}
           alt=""
           width={50}
           height={50}
-          className="rounded-full w-[50px] h-[50px] object-cover"
+          className="rounded-full md:w-[50px] md:h-[50px] object-cover h-[30px] w-[30px]"
         />
       </div>
       <SecondaryButton>1.4K+</SecondaryButton>

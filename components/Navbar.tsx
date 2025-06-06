@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PrimaryButton from "./PrimaryButton";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -21,8 +21,27 @@ export const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Lock scroll when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup in case component unmounts
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
+
+
+  
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div
+      className={`max-w-7xl mx-auto ${isMenuOpen ? "" : ""}`}
+    >
       <div className="flex items-center justify-between py-4 px-4 relative">
         <Link
           href="/"
@@ -45,7 +64,7 @@ export const Navbar = () => {
         <div className="flex gap-3 items-center">
           <Link href="/subscribe">
             <PrimaryButton
-              className="uppercase md:text-[15px] font-extrabold px-5 tracking-wider hidden sm:flex"
+              className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex"
               text="Subscribe"
             />
           </Link>

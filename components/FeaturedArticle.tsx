@@ -23,7 +23,7 @@ const Featuredblog: React.FC<Props> = ({ blog }) => {
               alt={blog.title}
               width={430}
               height={250}
-              className="rounded-2xl object-cover w-full h-[300px]"
+              className="rounded-2xl object-cover w-full h-[250px]"
             />
           </div>
 

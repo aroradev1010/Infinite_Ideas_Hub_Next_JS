@@ -44,7 +44,7 @@ export default function SubscribeButton({
           toast("Confirmation Email Sent", {
             description: `Check ${email} for confirmation.`,
           });
-        }
+        }w
         setEmail("");
       } else {
         toast.error(data.error || "Failed to start subscription.");
