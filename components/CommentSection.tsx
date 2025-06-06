@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PrimaryButton from "./PrimaryButton";
+import { formatDate } from "@/lib/utils";
 
 const commentSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -124,7 +125,7 @@ export default function CommentSection({ blogId }: { blogId: string }) {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">{comment.name}</span>
                   <span className="text-xs text-neutral-400">
-                    {new Date(comment.createdAt).toLocaleString()}
+                    {formatDate(comment.createdAt)}
                   </span>
                 </div>
                 <p className="text-sm text-neutral-200">{comment.message}</p>
@@ -132,7 +133,9 @@ export default function CommentSection({ blogId }: { blogId: string }) {
             </div>
           ))}
           {comments.length === 0 && (
-            <p className="text-neutral-400 text-md">No comments yet, add one now.</p>
+            <p className="text-neutral-400 text-md">
+              No comments yet, add one now.
+            </p>
           )}
         </div>
       </div>

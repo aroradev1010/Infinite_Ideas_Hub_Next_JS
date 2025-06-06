@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import SecondaryButton from "./SecondaryButton";
 import { Blog } from "@/types/blogType";
+import { formatDate, slugify } from "@/lib/utils";
 
 interface BlogCardProps {
   blog: Blog;
@@ -47,27 +48,14 @@ export default function BlogCard({
           </h2>
         </Link>
         <div className="mb-3 text-md font-bold tracking-wider">
-          <Link
-            href={`/authors/${blog.author
-              .toLowerCase()
-              .trim()
-              .replace(/[^a-z0-9\s-]/g, "") // remove invalid characters
-              .replace(/\s+/g, "-") // replace spaces with -
-              .replace(/-+/g, "-")}`}
-          >
+          <Link href={`/authors/${slugify(blog.author)}`}>
             <span className="capitalize text-gray-400 hover:text-primary">
               By {blog.author}
             </span>
           </Link>
           <Link href={`/blog/${blog.slug}`} key={blog.id}>
             <span className="text-gray-700 mx-3">/</span>
-            <span className="text-gray-400">
-              {new Date(blog.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
+            <span className="text-gray-400">{formatDate(blog.createdAt)}</span>
           </Link>
         </div>
         <Link href={`/blog/${blog.slug}`} key={blog.id}>
@@ -83,7 +71,7 @@ export default function BlogCard({
             ></div>
           </div>
         </Link>
-        <Link href={`/categories/${blog.category.toLowerCase()}`}>
+        <Link href={`/categories/${slugify(blog.category)}`}>
           <SecondaryButton>{blog.category}</SecondaryButton>
         </Link>
       </div>
