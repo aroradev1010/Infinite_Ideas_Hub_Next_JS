@@ -7,11 +7,13 @@ import { formatDate, slugify } from "@/lib/utils";
 interface BlogCardProps {
   blog: Blog;
   classNameDesktopImage?: string;
+  webkitLineCLamp?: number;
 }
 
 export default function BlogCard({
   blog,
   classNameDesktopImage,
+  webkitLineCLamp,
 }: BlogCardProps) {
   return (
     <div className="grid xl:grid-cols-3 gap-5 group">
@@ -61,10 +63,10 @@ export default function BlogCard({
         <Link href={`/blog/${blog.slug}`} key={blog.id}>
           <div className="tracking-wide text-gray-400 mb-5 overflow-hidden">
             <div
-              className="line-clamp-3 max-h-[6em] overflow-hidden text-ellipsis blogDescriptionError"
+              className="blogDescriptionError "
               style={{
                 display: "-webkit-box",
-                WebkitLineClamp: 3,
+                WebkitLineClamp: webkitLineCLamp || 3,
                 WebkitBoxOrient: "vertical",
               }}
               dangerouslySetInnerHTML={{ __html: blog?.description }}

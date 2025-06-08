@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 
 export default function LikeButton({
   slug,
@@ -19,54 +19,54 @@ export default function LikeButton({
     setLiked(likedBlogs.includes(slug));
   }, [slug]);
 
-  async function handleToggleLike() {
+  const handleToggleLike = async () => {
     if (loading) return;
     setLoading(true);
 
-    const res = await fetch(`/api/blog/${liked ? "unlike" : "like"}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug }),
-    });
+    try {
+      const res = await fetch(`/api/blog/${liked ? "unlike" : "like"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setLoading(false);
-      return;
+      const data = await res.json();
+      if (!res.ok) throw new Error("Failed to like/unlike");
+
+      setLikes(data.likes);
+      const likedBlogs = JSON.parse(localStorage.getItem("likedBlogs") || "[]");
+
+      if (liked) {
+        const updated = likedBlogs.filter((s: string) => s !== slug);
+        localStorage.setItem("likedBlogs", JSON.stringify(updated));
+        setLiked(false);
+      } else {
+        likedBlogs.push(slug);
+        localStorage.setItem("likedBlogs", JSON.stringify(likedBlogs));
+        setLiked(true);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeout(() => setLoading(false), 600); // debounce
     }
-
-    setLikes(data.likes);
-    const likedBlogs = JSON.parse(localStorage.getItem("likedBlogs") || "[]");
-
-    if (liked) {
-      // Unlike
-      const updated = likedBlogs.filter((s: string) => s !== slug);
-      localStorage.setItem("likedBlogs", JSON.stringify(updated));
-      setLiked(false);
-    } else {
-      // Like
-      likedBlogs.push(slug);
-      localStorage.setItem("likedBlogs", JSON.stringify(likedBlogs));
-      setLiked(true);
-    }
-
-    setLoading(false);
-  }
+  };
 
   return (
     <button
       onClick={handleToggleLike}
       disabled={loading}
-      className={`flex items-center gap-2 transition-colors duration-200 cursor-pointer ${
-        liked ? "text-red-500" : "text-gray-500 cursor-pointer"
-      }`}
+      aria-label={liked ? "Unlike" : "Like"}
+      className={`flex items-center gap-2 transition-colors duration-200 ${
+        liked ? "text-red-500" : "text-gray-500"
+      } ${loading ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
     >
-      <Heart fill={liked ? "currentColor" : "none"} />
-      <span
-        className={`${liked ? "text-gray-300" : "text-gray-500 cursor-pointer"}`}
-      >
-        {likes}
-      </span>
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Heart fill={liked ? "currentColor" : "none"} />
+      )}
+      <span>{likes}</span>
     </button>
   );
 }

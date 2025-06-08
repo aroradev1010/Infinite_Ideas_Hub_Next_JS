@@ -3,7 +3,7 @@ import StarBackground from "@/components/StarBackground";
 import FeaturedArticle from "@/components/FeaturedArticle";
 import { getFeaturedBlog } from "@/lib/blogService";
 import LatestArticles from "@/components/LatestArticles";
-import SubscribeButton from "@/components/SubscribeButton";
+import SubscribeSection from "@/components/SubscribeSection";
 import PopularCategories from "@/components/PopularCategories";
 import SubscriptionToast from "@/components/SubscriptionToast";
 
@@ -32,7 +32,7 @@ export default async function Home() {
           {/* Sticky subscribe button on the right */}
           <div className="hidden xl:block col-span-1">
             <div className="sticky top-10 ml-20">
-              <SubscribeButton />
+              <SubscribeSection />
               <PopularCategories />
             </div>
           </div>

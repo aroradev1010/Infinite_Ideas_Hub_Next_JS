@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner"; // or react-hot-toast
+import { formatDate } from "@/lib/utils";
 import {
   Form,
   FormField,
@@ -15,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PrimaryButton from "./PrimaryButton";
-import { formatDate } from "@/lib/utils";
 
 const commentSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -31,8 +32,13 @@ interface Comment {
   createdAt: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function CommentSection({ blogId }: { blogId: string }) {
-  const [comments, setComments] = useState<Comment[]>([]);
+  const { data: comments = [], mutate } = useSWR<Comment[]>(
+    `/api/comments?blogId=${blogId}`,
+    fetcher
+  );
 
   const form = useForm<CommentFormData>({
     resolver: zodResolver(commentSchema),
@@ -42,12 +48,6 @@ export default function CommentSection({ blogId }: { blogId: string }) {
     },
   });
 
-  useEffect(() => {
-    fetch(`/api/comments?blogId=${blogId}`)
-      .then((res) => res.json())
-      .then((data: Comment[]) => setComments(data));
-  }, [blogId]);
-
   const onSubmit = async (data: CommentFormData) => {
     const res = await fetch("/api/comments", {
       method: "POST",
@@ -55,17 +55,21 @@ export default function CommentSection({ blogId }: { blogId: string }) {
       body: JSON.stringify({ blogId, ...data }),
     });
 
-    if (res.ok) {
-      const { insertedId } = await res.json();
-      const newComment: Comment = {
-        _id: insertedId,
-        name: data.name,
-        message: data.message,
-        createdAt: new Date().toISOString(),
-      };
-      setComments([newComment, ...comments]);
-      form.reset();
+    if (!res.ok) {
+      toast.error("Failed to post comment");
+      return;
     }
+
+    const { insertedId } = await res.json();
+    const newComment: Comment = {
+      _id: insertedId,
+      name: data.name,
+      message: data.message,
+      createdAt: new Date().toISOString(),
+    };
+
+    mutate([newComment, ...comments], false);
+    form.reset();
   };
 
   return (
@@ -73,7 +77,7 @@ export default function CommentSection({ blogId }: { blogId: string }) {
       <h1 className="font-bold text-md px-4 mb-5 uppercase tracking-wider">
         Comments
       </h1>
-      <div className="rounded-xl p-6 mt-8  mx-auto text-white border-1 border-gray-800">
+      <div className="rounded-xl p-6 mt-8 mx-auto text-white border-1 border-gray-800">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -83,7 +87,7 @@ export default function CommentSection({ blogId }: { blogId: string }) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your name" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -94,50 +98,29 @@ export default function CommentSection({ blogId }: { blogId: string }) {
               name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comment</FormLabel>
+                  <FormLabel>Message</FormLabel>
                   <FormControl>
-                    <Textarea
-                      className="resize-none h-24"
-                      placeholder="Write your comment here..."
-                      {...field}
-                    />
+                    <Textarea rows={4} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <PrimaryButton type="submit" className="" text="Publish" />
+            <PrimaryButton type="submit">Post Comment</PrimaryButton>
           </form>
         </Form>
+      </div>
 
-        <hr className="border-neutral-800 my-6" />
-
-        <div className="space-y-4">
-          {comments.map((comment) => (
-            <div key={comment._id} className="flex gap-3 items-start">
-              <div
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-bold"
-                title={comment.name}
-              >
-                {comment.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">{comment.name}</span>
-                  <span className="text-xs text-neutral-400">
-                    {formatDate(comment.createdAt)}
-                  </span>
-                </div>
-                <p className="text-sm text-neutral-200">{comment.message}</p>
-              </div>
+      <div className="mt-8 space-y-6">
+        {comments.map((comment) => (
+          <div key={comment._id} className="border p-4 rounded-xl">
+            <div className="text-sm font-semibold">{comment.name}</div>
+            <p className="text-sm text-gray-300">{comment.message}</p>
+            <div className="text-xs text-gray-500">
+              {formatDate(comment.createdAt)}
             </div>
-          ))}
-          {comments.length === 0 && (
-            <p className="text-neutral-400 text-md">
-              No comments yet, add one now.
-            </p>
-          )}
-        </div>
+          </div>
+        ))}
       </div>
     </>
   );

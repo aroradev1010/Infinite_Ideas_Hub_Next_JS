@@ -35,7 +35,8 @@ export default async function AuthorDetailPage({
             <BlogCard
               key={blog.slug}
               blog={blog}
-              classNameDesktopImage="w-full rounded-xl h-[250px]"
+              webkitLineCLamp={4}
+              classNameDesktopImage="w-full rounded-xl h-[200px]"
             />
             <div className="my-10" />
           </div>

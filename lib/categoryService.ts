@@ -7,14 +7,25 @@ export async function getAllCategories(): Promise<Category[]> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-    const cats = await db
+    const docs = await db
       .collection("categories")
-      .find({})
+      .find(
+        {},
+        {
+          projection: {
+            name: 1,
+            slug: 1,
+            createdAt: 1,
+            description: 1,
+            categoryImage: 1,
+          },
+        }
+      )
       .sort({ name: 1 })
       .toArray();
-    return cats.map(transformCategory);
-  } catch (err) {
-    console.error("Failed to fetch categories:", err);
+    return docs.map(transformCategory);
+  } catch (error) {
+    console.error("getAllCategories error:", error);
     return [];
   }
 }
@@ -25,10 +36,15 @@ export async function getCategoryBySlug(
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-    const doc = await db.collection("categories").findOne({ slug });
+    const doc = await db
+      .collection("categories")
+      .findOne(
+        { slug },
+        { projection: { name: 1, slug: 1, createdAt: 1, description: 1 } }
+      );
     return doc ? transformCategory(doc) : null;
-  } catch (err) {
-    console.error("Failed to fetch category:", err);
+  } catch (error) {
+    console.error("getCategoryBySlug error:", error);
     return null;
   }
 }

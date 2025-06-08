@@ -5,12 +5,10 @@ import Link from "next/link";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
 import { formatDate, slugify } from "@/lib/utils";
-export default async function BlogPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+
+
+export default async function BlogPage({ params }: { params: { slug: string } }) {
+  const { slug } =  params;
   const blog = await getBlogBySlug(slug);
   if (!blog) return notFound();
   const nextBlog = await getNextOrOldestBlog(new Date(blog.createdAt));

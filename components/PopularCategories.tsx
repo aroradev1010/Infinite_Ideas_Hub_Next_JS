@@ -4,16 +4,6 @@ import { getAllCategories } from "@/lib/categoryService";
 import Image from "next/image";
 import Link from "next/link";
 
-const categoryIcons: Record<string, string> = {
-  "fantasy-of-manners": "/fallback.jpg",
-  "book-reviews": "/fallback.jpg",
-  mythology: "/fallback.jpg",
-  "sword-and-sorcery": "/fallback.jpg",
-  litrpg: "/fallback.jpg",
-  "magic-realism": "/fallback.jpg",
-  // fallback icons can be added here
-};
-
 const PopularCategories = async () => {
   const categories = await getAllCategories();
   const topCategories = categories.slice(0, 6); // limit to 6
@@ -31,7 +21,7 @@ const PopularCategories = async () => {
             className="flex items-center gap-3 hover:opacity-70 transition-opacity"
           >
             <Image
-              src={category.categoryImage || "/fallback.avif"}
+              src={`${category.categoryImage}`}
               alt={category.name}
               width={36}
               height={36}

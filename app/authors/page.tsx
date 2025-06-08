@@ -1,13 +1,15 @@
+// app/authors/page.tsx
 import StarBackground from "@/components/StarBackground";
 import { getAllAuthors } from "@/lib/authorService";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import { Author } from "@/types/authorType";
 
-const page = async () => {
-  const authors = await getAllAuthors();
+export default async function AuthorsPage() {
+  const authors: Author[] = await getAllAuthors();
+
   return (
-    <div className="h-screen">
+    <div className="min-h-screen">
       <div className="h-96">
         <StarBackground
           imageSrc="/authorsPage.webp"
@@ -17,27 +19,14 @@ const page = async () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="flex flex-wrap flex-col md:flex-row gap-10 justify-center">
+        <div className="flex flex-wrap justify-center gap-10">
           {authors.map((author) => (
             <Link
               key={author.id}
               href={`/authors/${author.slug}`}
-              className="relative group xl:w-[400px] cursor-pointer"
+              className="group w-[300px] md:w-[400px] cursor-pointer"
             >
-              {/* ─── Card ───────────────────── */}
-              <div
-                className="
-            relative
-            flex flex-col
-            p-8
-            rounded-2xl
-            bg-transparent
-            border border-white/10
-            transform-gpu
-            transition-transform duration-500
-            group-hover:rotate-x-3 group-hover:-rotate-y-6 group-hover:scale-[1.03]
-          "
-              >
+              <div className="relative flex flex-col p-8 rounded-2xl bg-transparent border border-white/10 transform-gpu transition-transform duration-500 group-hover:rotate-x-3 group-hover:-rotate-y-6 group-hover:scale-105">
                 <div className="w-[80px] h-[80px] mb-4 relative flex-shrink-0">
                   <Image
                     src={author.profileImage || "/fallback-avatar.png"}
@@ -56,6 +45,4 @@ const page = async () => {
       </div>
     </div>
   );
-};
-
-export default page;
+}

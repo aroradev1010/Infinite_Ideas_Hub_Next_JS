@@ -1,6 +1,6 @@
 // app/subscribe/page.tsx
 import Image from "next/image";
-import SubscribeButton from "@/components/SubscribeButton";
+import SubscribeSection from "@/components/SubscribeSection";
 
 export default function SubscribePage() {
   return (
@@ -31,11 +31,11 @@ export default function SubscribePage() {
         {/* 3. Centered Subscribe Button Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pb-20 md:pb-0">
           <div className="max-w-2xl w-full mb-30">
-            <SubscribeButton
-              classNameHeading="md:text-4xl text-xl w-5/6 text-center leading-snug tracking-wider text-white mb-6"
-              classNameLayout="flex flex-col justify-center items-center"
-              classNameInput="max-w-full w-full tracking-wider bg-black/80"
-              classNameParagraph="text-xl"
+            <SubscribeSection
+              headingClassName="md:text-4xl text-xl w-5/6 text-center leading-snug tracking-wider text-white mb-6"
+              className="flex flex-col justify-center items-center"
+              inputWrapperClassName="max-w-full w-full tracking-wider bg-black/80"
+              footerClassName="text-xl"
             />
           </div>
         </div>
