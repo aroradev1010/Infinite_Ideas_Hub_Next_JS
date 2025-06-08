@@ -53,7 +53,7 @@ const Starfield: React.FC<StarfieldProps> = ({
           return out;
         };
 
-        let stars = makeStars(starCount);
+        const stars = makeStars(starCount);
 
         const clear = () => {
           c.fillStyle = backgroundColor;
@@ -84,7 +84,7 @@ const Starfield: React.FC<StarfieldProps> = ({
         };
 
         const tick = (time: number) => {
-          let elapsed = time - prevTime;
+          const elapsed = time - prevTime;
           prevTime = time;
 
           moveStars(elapsed * speedFactor);

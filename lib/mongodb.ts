@@ -1,27 +1,26 @@
-// lib/mongodb.ts
 import { MongoClient } from "mongodb";
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("Missing MONGODB_URI in .env.local");
-}
-
-const uri = process.env.MONGODB_URI!;
+const uri = process.env.MONGODB_URI;
 const options = {};
+
+if (!uri) {
+  throw new Error("Missing MONGODB_URI in environment variables");
+}
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-declare global {
-  var _mongoClientPromise: Promise<MongoClient>;
-}
+// Use a cached promise only in development
+const globalForMongo = globalThis as unknown as {
+  _mongoClientPromise?: Promise<MongoClient>;
+};
 
-// Reuse client during hot reload in development
 if (process.env.NODE_ENV === "development") {
-  if (!global._mongoClientPromise) {
+  if (!globalForMongo._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+    globalForMongo._mongoClientPromise = client.connect();
   }
-  clientPromise = global._mongoClientPromise;
+  clientPromise = globalForMongo._mongoClientPromise;
 } else {
   client = new MongoClient(uri, options);
   clientPromise = client.connect();

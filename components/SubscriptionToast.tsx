@@ -13,7 +13,7 @@ export default function SubscriptionToast() {
       toast.success("🎉 You have successfully subscribed to our newsletter!");
       router.replace("/", { scroll: false });
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   return null;
 }

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // If there's an existing pending token, reuse it (or optionally delete & recreate)
-    let existingPending = await pending.findOne({ email });
+    const existingPending = await pending.findOne({ email });
     let token: string;
     if (existingPending) {
       token = existingPending.token;

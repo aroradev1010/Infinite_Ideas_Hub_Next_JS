@@ -106,7 +106,7 @@ export default function CommentSection({ blogId }: { blogId: string }) {
                 </FormItem>
               )}
             />
-            <PrimaryButton type="submit">Post Comment</PrimaryButton>
+            <PrimaryButton text="Post Comment" />
           </form>
         </Form>
       </div>

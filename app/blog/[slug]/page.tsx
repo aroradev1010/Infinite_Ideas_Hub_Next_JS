@@ -6,11 +6,16 @@ import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
 import { formatDate, slugify } from "@/lib/utils";
 
+// Define the Props interface with explicit params type
+interface Props {
+  params: Promise<{ slug: string }>; // Use Promise to match Next.js expectation
+}
 
-export default async function BlogPage({ params }: { params: { slug: string } }) {
-  const { slug } =  params;
+export default async function BlogPage({ params }: Props) {
+  const { slug } = await params; // Await params to resolve the Promise
   const blog = await getBlogBySlug(slug);
   if (!blog) return notFound();
+
   const nextBlog = await getNextOrOldestBlog(new Date(blog.createdAt));
   const blogId = blog.id.toString();
 
@@ -25,7 +30,7 @@ export default async function BlogPage({ params }: { params: { slug: string } })
           </Link>
           <Link href={`/blog/${blog.slug}`} key={blog.id}>
             <span className="text-gray-700 mx-3">/</span>
-            <span className="text-gray-400 ">{formatDate(blog.createdAt)}</span>
+            <span className="text-gray-400">{formatDate(blog.createdAt)}</span>
           </Link>
         </div>
         <div className="hidden md:flex">
@@ -50,7 +55,7 @@ export default async function BlogPage({ params }: { params: { slug: string } })
 
       {nextBlog && (
         <div className="my-20">
-          <h1 className="font-bold text-md px-4 mb-5 uppercase tracking-wider ">
+          <h1 className="font-bold text-md px-4 mb-5 uppercase tracking-wider">
             Next Article
           </h1>
           <Link
@@ -83,3 +88,11 @@ export default async function BlogPage({ params }: { params: { slug: string } })
     </div>
   );
 }
+
+// // Optional: Define generateStaticParams for static generation
+// export async function generateStaticParams() {
+//   const blogs = await getAllBlogSlugs(); // Hypothetical function to fetch all slugs
+//   return blogs.map((blog) => ({
+//     slug: blog.slug,
+//   }));
+// }
