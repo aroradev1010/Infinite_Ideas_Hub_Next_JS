@@ -36,12 +36,18 @@ export async function getCategoryBySlug(
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-    const doc = await db
-      .collection("categories")
-      .findOne(
-        { slug },
-        { projection: { name: 1, slug: 1, createdAt: 1, description: 1 } }
-      );
+    const doc = await db.collection("categories").findOne(
+      { slug },
+      {
+        projection: {
+          name: 1,
+          slug: 1,
+          createdAt: 1,
+          description: 1,
+          categoryImage: 1,
+        },
+      }
+    );
     return doc ? transformCategory(doc) : null;
   } catch (error) {
     console.error("getCategoryBySlug error:", error);
