@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import PrimaryButton from "./PrimaryButton";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -16,6 +17,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname() || "/";
+  const { data: session } = useSession();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -35,13 +37,8 @@ export const Navbar = () => {
     };
   }, [isMenuOpen]);
 
-
-  
-
   return (
-    <div
-      className={`max-w-7xl mx-auto ${isMenuOpen ? "" : ""}`}
-    >
+    <div className={`max-w-7xl mx-auto ${isMenuOpen ? "" : ""}`}>
       <div className="flex items-center justify-between py-4 px-4 relative">
         <Link
           href="/"
@@ -62,12 +59,37 @@ export const Navbar = () => {
         </ul>
 
         <div className="flex gap-3 items-center">
-          <Link href="/subscribe">
-            <PrimaryButton
-              className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex"
-              text="Subscribe"
-            />
-          </Link>
+          <div className="flex gap-5">
+            {session?.user ? (
+              <>
+                <PrimaryButton
+                  className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex w-[90px]"
+                  text="Log Out"
+                  onClick={() => signOut()}
+                />
+                <PrimaryButton
+                  className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex"
+                  text="Subscribe"
+                />
+              </>
+            ) : (
+              <>
+                <Link href="/auth/sign-in">
+                  <PrimaryButton
+                    className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex w-[90px]"
+                    text="Sign Up"
+                  />
+                </Link>
+                <Link href="/subscribe">
+                  <PrimaryButton
+                    className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex "
+                    text="Subscribe"
+                  />
+                </Link>
+              </>
+            )}
+          </div>
+
           <SecondaryButton
             className="bg-secondary hover:bg-secondary/60 text-white rounded-full p-2 xl:hidden"
             onClick={toggleMenu}

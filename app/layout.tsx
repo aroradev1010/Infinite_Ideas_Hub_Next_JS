@@ -1,9 +1,9 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
-// import Footer from "@/components/Footer";
-import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "./providers";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -18,19 +18,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={`${nunito.variable} antialiased dark`}>
+        <Providers>
         <Navbar />
-        <div className="z-0 mb-20 page">
-          <Toaster position="top-center" />
-          {children}
-        </div>
-
-        {/* <Footer /> */}
+          <div className="z-0 mb-20 page">{children}</div>
+        </Providers>
       </body>
     </html>
   );
