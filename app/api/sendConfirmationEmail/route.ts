@@ -1,4 +1,4 @@
-// app/api/send-subscribe/route.ts
+// app/api/sendConfirmationEmail/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
@@ -24,15 +24,14 @@ export async function POST(req: NextRequest) {
     const subscribers = db.collection("subscribers");
     const pending = db.collection("pendingSubscribers");
 
-    // If already fully subscribed:
-    const already = await subscribers.findOne({ email });
-    if (already) {
+    const existingSubscriber = await subscribers.findOne({ email });
+    if (existingSubscriber) {
       return NextResponse.json({ already: true });
     }
 
-    // If there's an existing pending token, reuse it (or optionally delete & recreate)
-    const existingPending = await pending.findOne({ email });
+    // Create or reuse pending token
     let token: string;
+    const existingPending = await pending.findOne({ email });
     if (existingPending) {
       token = existingPending.token;
     } else {
@@ -44,9 +43,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    
+
     // Send confirmation email
     const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/confirmSubscription?token=${token}`;
-
     await resend.emails.send({
       from: "Your App <onboarding@resend.dev>",
       to: [email],
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ already: false });
   } catch (err) {
-    console.error("Error in send-subscribe:", err);
+    console.error("Error in sendConfirmationEmail:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   } finally {
     await client.close();
