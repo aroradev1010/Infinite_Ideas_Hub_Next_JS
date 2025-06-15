@@ -5,12 +5,10 @@ import { cn } from "@/lib/utils";
 const PrimaryButton = ({
   className,
   text,
-
   onClick,
 }: {
   className?: string;
   text: string;
-
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
   return (

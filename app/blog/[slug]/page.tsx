@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
-import { formatDate, slugify } from "@/lib/utils";
+import { cn, formatDate, slugify } from "@/lib/utils";
+
+import { authOptions } from "@/lib/auth"; // adjust path as needed
+import { getServerSession } from "next-auth";
+import PrimaryButton from "@/components/PrimaryButton";
 
 // Define the Props interface with explicit params type
 interface Props {
@@ -12,7 +16,8 @@ interface Props {
 }
 
 export default async function BlogPage({ params }: Props) {
-  const { slug } = await params; // Await params to resolve the Promise
+  const session = await getServerSession(authOptions);
+  const { slug } = await params;
   const blog = await getBlogBySlug(slug);
   if (!blog) return notFound();
 
@@ -48,10 +53,30 @@ export default async function BlogPage({ params }: Props) {
         className="rounded-xl object-cover w-full h-[500px] mb-8"
       />
 
-      <div
-        className="tracking-wide blogDescription"
-        dangerouslySetInnerHTML={{ __html: blog && blog.description }}
-      ></div>
+      <div className="relative">
+        <div
+          className={cn(
+            "tracking-wide blogDescription transition-all duration-300",
+            !session && "line-clamp-10"
+          )}
+          dangerouslySetInnerHTML={{ __html: blog.description }}
+        ></div>
+
+        {!session && (
+          <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-background to-transparent flex items-end justify-center pointer-events-none">
+            <div className="pointer-events-auto mb-4">
+              <Link href="/auth/sign-in">
+                <PrimaryButton
+                  text=" Sign Up to Read More
+                "
+                  className="text-lg mb-10"
+                />
+                
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
 
       {nextBlog && (
         <div className="my-20">
