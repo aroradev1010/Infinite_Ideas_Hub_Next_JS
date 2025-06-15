@@ -2,11 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import PrimaryButton from "./PrimaryButton";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import SecondaryButton from "./SecondaryButton";
+import { Button } from "./ui/button";
 
 const navLinks = [
   { id: 1, name: "Home", link: "/" },
@@ -23,7 +24,6 @@ export const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Lock scroll when menu is open
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -31,7 +31,6 @@ export const Navbar = () => {
       document.body.style.overflow = "";
     }
 
-    // Cleanup in case component unmounts
     return () => {
       document.body.style.overflow = "";
     };
@@ -62,13 +61,15 @@ export const Navbar = () => {
           <div className="flex gap-5">
             {session?.user ? (
               <>
-                <PrimaryButton
-                  className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex w-[90px]"
-                  text="Log Out"
+                <Button
+                  className="uppercase md:text-sm font-extrabold  tracking-wider hidden sm:flex w-[90px] text-red-600 cursor-pointer bg-transparent hover:bg-transparent hover:opacity-85 pt-4"
                   onClick={() => signOut()}
-                />
+                >
+                  <LogOut />
+                  LogOut
+                </Button>
                 <PrimaryButton
-                  className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex"
+                  className={`uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex `}
                   text="Subscribe"
                 />
               </>
@@ -82,7 +83,7 @@ export const Navbar = () => {
                 </Link>
                 <Link href="/subscribe">
                   <PrimaryButton
-                    className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex "
+                    className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex"
                     text="Subscribe"
                   />
                 </Link>
@@ -119,6 +120,58 @@ export const Navbar = () => {
                 className="text-2xl"
               />
             ))}
+
+            {session?.user ? (
+              <>
+                <li>
+                  <Link
+                    href="/subscribe"
+                    onClick={toggleMenu}
+                    className={cn(
+                      "text-2xl font-bold transition",
+                      pathname === "/subscribe"
+                        ? "text-primary"
+                        : "hover:text-primary"
+                    )}
+                  >
+                    Subscribe
+                  </Link>
+                </li>
+
+                <li>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      toggleMenu();
+                    }}
+                    className="text-left text-2xl font-bold text-red-500 hover:text-red-600 transition"
+                  >
+                    Log Out
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link
+                    href="/auth/sign-in"
+                    onClick={toggleMenu}
+                    className="text-2xl font-bold hover:text-primary transition"
+                  >
+                    Sign Up
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/subscribe"
+                    onClick={toggleMenu}
+                    className="text-2xl font-bold hover:text-primary transition"
+                  >
+                    Subscribe
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </div>
       </div>

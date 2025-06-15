@@ -1,12 +1,9 @@
 import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./mongodb";
 import type { NextAuthOptions } from "next-auth";
-import { compare } from "bcryptjs";
-import { getUserByEmail } from "./userService"; // Create this file to get user from DB
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -19,31 +16,6 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await getUserByEmail(credentials.email);
-        if (!user || !user.hashedPassword) return null;
-
-        const isValid = await compare(
-          credentials.password,
-          user.hashedPassword
-        );
-        if (!isValid) return null;
-
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-        };
-      },
-    }),
   ],
   pages: {
     signIn: "/auth/sign-in",
@@ -55,7 +27,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  
 };
 
 const handler = NextAuth(authOptions);
