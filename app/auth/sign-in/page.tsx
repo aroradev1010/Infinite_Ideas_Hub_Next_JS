@@ -8,7 +8,7 @@ import { Github, Chrome } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SignInPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
 
