@@ -21,6 +21,15 @@ export default async function BlogPage({ params }: Props) {
   const blog = await getBlogBySlug(slug);
   if (!blog) return notFound();
 
+  // 🧠 Check if the blog is a draft
+  const isDraft = blog.status !== "published";
+  const isAdmin = session?.user?.role === "admin";
+
+  // ✅ If blog is draft and user is not admin, block access
+  if (isDraft && !isAdmin) {
+    return notFound();
+  }
+
   const nextBlog = await getNextOrOldestBlog(new Date(blog.createdAt));
   const blogId = blog.id.toString();
 
@@ -44,6 +53,11 @@ export default async function BlogPage({ params }: Props) {
       </div>
       <h1 className="text-4xl font-bold my-5 capitalize tracking-wide leading-14">
         {blog.title}
+        {blog.status === "draft" && (
+          <p className="text-sm text-yellow-500 font-semibold">
+            [Draft - Not Published]
+          </p>
+        )}
       </h1>
       <Image
         src={blog.image.trimEnd() || "/fallback.avif"}

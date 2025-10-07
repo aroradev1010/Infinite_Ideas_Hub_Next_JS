@@ -1,3 +1,4 @@
+// lib/blogService.ts
 import clientPromise from "./mongodb";
 import { transformBlog } from "@/models/blogModel";
 import { Blog } from "@/types/blogType";
@@ -9,7 +10,7 @@ export async function getFeaturedBlog(): Promise<Blog | null> {
     const db = client.db(process.env.MONGODB_DB);
     const blog = await db
       .collection("blogs")
-      .find({})
+      .find({ status: "published" }) // ✅ show only published
       .sort({ likes: -1 })
       .limit(1)
       .toArray();
@@ -21,13 +22,11 @@ export async function getFeaturedBlog(): Promise<Blog | null> {
   }
 }
 
-// ✅ New: Get blog by slug (used in [slug]/page.tsx)
 export async function getBlogBySlug(slug: string): Promise<Blog | null> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
     const blog = await db.collection("blogs").findOne({ slug });
-
     return blog ? transformBlog(blog) : null;
   } catch (error) {
     console.error("Failed to fetch blog by slug:", error);
@@ -35,7 +34,6 @@ export async function getBlogBySlug(slug: string): Promise<Blog | null> {
   }
 }
 
-// ✅ Optional: Keep this only if you still use ID anywhere
 export async function getBlogById(id: string): Promise<Blog | null> {
   if (!ObjectId.isValid(id)) {
     console.error("Invalid blog id:", id);
@@ -48,7 +46,6 @@ export async function getBlogById(id: string): Promise<Blog | null> {
     const blog = await db
       .collection("blogs")
       .findOne({ _id: new ObjectId(id) });
-
     return blog ? transformBlog(blog) : null;
   } catch (error) {
     console.error("Failed to fetch blog by ID:", error);
@@ -63,7 +60,7 @@ export async function getAllBlogs(): Promise<Blog[]> {
 
     const blogs = await db
       .collection("blogs")
-      .find({})
+      .find({ status: "published" }) // ✅ Only published blogs
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -81,7 +78,10 @@ export async function getBlogsByAuthor(authorName: string): Promise<Blog[]> {
 
     const blogs = await db
       .collection("blogs")
-      .find({ author: authorName })
+      .find({
+        author: authorName,
+        status: "published", // ✅ Only published blogs by author
+      })
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -100,9 +100,13 @@ export async function getBlogsByCategory(
     const db = client.db(process.env.MONGODB_DB);
     const blogs = await db
       .collection("blogs")
-      .find({ category: categoryName })
+      .find({
+        category: categoryName,
+        status: "published", // ✅ Only published blogs by category
+      })
       .sort({ createdAt: -1 })
       .toArray();
+
     return blogs.map(transformBlog);
   } catch (err) {
     console.error("Failed to fetch blogs by category:", err);
@@ -117,10 +121,10 @@ export async function getNextOrOldestBlog(
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
 
-    // Try to find the next newer blog
+    // ✅ Filter by published only
     const nextBlog = await db
       .collection("blogs")
-      .find({ createdAt: { $gt: currentBlogDate } })
+      .find({ createdAt: { $gt: currentBlogDate }, status: "published" })
       .sort({ createdAt: 1 })
       .limit(1)
       .toArray();
@@ -129,10 +133,12 @@ export async function getNextOrOldestBlog(
       return transformBlog(nextBlog[0]);
     }
 
-    // If no newer blog exists, return the oldest blog (excluding current)
     const oldestBlog = await db
       .collection("blogs")
-      .find({ createdAt: { $ne: currentBlogDate } })
+      .find({
+        createdAt: { $ne: currentBlogDate },
+        status: "published", // ✅ published only
+      })
       .sort({ createdAt: 1 })
       .limit(1)
       .toArray();
@@ -149,11 +155,13 @@ export async function likeBlogBySlug(slug: string): Promise<number | null> {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
 
-    const result = await db.collection("blogs").findOneAndUpdate(
-      { slug },
-      { $inc: { likes: 1 } },
-      { returnDocument: "after" } // Try { returnOriginal: false } if this fails
-    );
+    const result = await db
+      .collection("blogs")
+      .findOneAndUpdate(
+        { slug },
+        { $inc: { likes: 1 } },
+        { returnDocument: "after" }
+      );
     if (!result) {
       console.error(`No blog found for slug: ${slug}`);
       return null;
@@ -165,7 +173,6 @@ export async function likeBlogBySlug(slug: string): Promise<number | null> {
     return null;
   }
 }
-
 
 export async function unlikeBlogBySlug(slug: string): Promise<number | null> {
   try {
