@@ -71,23 +71,30 @@ export async function getAllBlogs(): Promise<Blog[]> {
   }
 }
 
-export async function getBlogsByAuthor(authorName: string): Promise<Blog[]> {
+export async function getBlogsByAuthorId(authorId: string): Promise<Blog[]> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
 
+    // ensure we query by stored authorId (ObjectId)
+    const { ObjectId } = require("mongodb");
+    const query: any = { status: "published" };
+    if (ObjectId.isValid(authorId)) {
+      query.authorId = new ObjectId(authorId);
+    } else {
+      // fallback to nothing
+      return [];
+    }
+
     const blogs = await db
       .collection("blogs")
-      .find({
-        author: authorName,
-        status: "published", // ✅ Only published blogs by author
-      })
+      .find(query)
       .sort({ createdAt: -1 })
       .toArray();
 
     return blogs.map(transformBlog);
-  } catch (error) {
-    console.error("Failed to fetch blogs by author:", error);
+  } catch (err) {
+    console.error("Failed to fetch blogs by author id:", err);
     return [];
   }
 }

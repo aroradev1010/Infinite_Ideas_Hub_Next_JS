@@ -50,11 +50,12 @@ export default function BlogCard({
           </h2>
         </Link>
         <div className="mb-3 text-md font-bold tracking-wider">
-          <Link href={`/authors/${slugify(blog.author)}`}>
+          <Link href={`/authors/${blog.authorSlug ?? slugify(blog.author)}`}>
             <span className="capitalize text-gray-400 hover:text-primary">
               By {blog.author}
             </span>
           </Link>
+
           <Link href={`/blog/${blog.slug}`} key={blog.id}>
             <span className="text-gray-700 mx-3">/</span>
             <span className="text-gray-400">{formatDate(blog.createdAt)}</span>

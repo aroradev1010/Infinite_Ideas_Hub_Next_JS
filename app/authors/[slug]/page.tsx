@@ -2,7 +2,7 @@
 import BlogCard from "@/components/BlogCard";
 import StarBackground from "@/components/StarBackground";
 import { getAuthorBySlug } from "@/lib/authorService";
-import { getBlogsByAuthor } from "@/lib/blogService";
+import { getBlogsByAuthorId } from "@/lib/blogService";
 import { notFound } from "next/navigation";
 
 export default async function AuthorDetailPage({
@@ -14,7 +14,8 @@ export default async function AuthorDetailPage({
   const author = await getAuthorBySlug(slug);
   if (!author) return notFound();
 
-  const blogs = await getBlogsByAuthor(author.name);
+  const blogs = await getBlogsByAuthorId(author.id);
+
 
   return (
     <div className=" h-screen ">
