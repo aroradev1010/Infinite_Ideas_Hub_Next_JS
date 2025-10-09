@@ -1,46 +1,21 @@
 // app/api/admin/posts/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import { authOptions } from "@/lib/auth";
+import { requireRole } from "@/lib/requireRole";
+import { getAllBlogsForAdmin } from "@/lib/blogService";
 
 // Schema validation for PATCH requests
 const patchSchema = z.object({
   id: z.string().min(1),
   action: z.enum(["publish", "unpublish", "delete"]),
 });
-
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "admin") {
-    throw NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  return session;
-}
-
 // GET: List all blogs (admin only)
 export async function GET() {
   try {
-    await requireAdmin();
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-
-    const blogs = await db
-      .collection("blogs")
-      .find({})
-      .sort({ createdAt: -1 })
-      .project({
-        title: 1,
-        slug: 1,
-        author: 1,
-        category: 1,
-        status: 1,
-        createdAt: 1,
-      })
-      .toArray();
+    await requireRole(["admin"]);
+    const blogs = getAllBlogsForAdmin()
 
     return NextResponse.json(blogs);
   } catch (err: any) {
@@ -56,7 +31,7 @@ export async function GET() {
 // PATCH: Update post status or delete
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin();
+    await requireRole(["admin"]);
     const { id, action } = await req.json();
     const parsed = patchSchema.safeParse({ id, action });
     if (!parsed.success) {

@@ -1,24 +1,16 @@
 // app/admin/authors/page.tsx
 
 import AdminAuthorsTable from "@/components/admin/AdminAuthorstable";
-import { isAdmin } from "@/lib/isAdmin";
-import clientPromise from "@/lib/mongodb";
+import { getAllAuthorsForAdmin } from "@/lib/authorService";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function AdminAuthorsPage() {
-    const admin = await isAdmin();
-    if (!admin) return null;
-
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const authors = await db
-        .collection("authors")
-        .find({})
-        .sort({ createdAt: -1 })
-        .project({ name: 1, bio: 1, profileImage: 1, slug: 1, createdAt: 1 })
-        .toArray();
+    await requireRole(["admin"]);
+    const authors = await getAllAuthorsForAdmin()
+   
 
     const payload = authors.map((a: any) => ({
-        id: a._id.toString(),
+        id: a.id,
         name: a.name,
         bio: a.bio,
         profileImage: a.profileImage,

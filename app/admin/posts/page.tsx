@@ -1,11 +1,10 @@
 // app/admin/posts/page.tsx
 import clientPromise from "@/lib/mongodb";
-import { isAdmin } from "@/lib/isAdmin";
 import AdminPostsTable from "@/components/admin/AdminPostsTable";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function AdminPostsPage() {
-    const admin = await isAdmin();
-    if (!admin) return null;
+    await requireRole(["admin"]);
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);

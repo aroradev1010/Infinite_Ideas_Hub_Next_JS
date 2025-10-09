@@ -1,7 +1,7 @@
-import { isAdmin } from "@/lib/isAdmin";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-    const admin = await isAdmin();
+    const admin = await requireRole(["admin"]);
 
     if (!admin) {
         return (
@@ -25,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <li><a href="/admin/posts">Manage Posts</a></li>
                     <li><a href="/admin/authors">Manage Authors</a></li>
                     <li><a href="/admin/categories">Manage Categories</a></li>
+                    <li><a href="/admin/users">Manage Users</a></li>
                 </ul>
             </aside>
             <main className="flex-1  p-8">{children}</main>

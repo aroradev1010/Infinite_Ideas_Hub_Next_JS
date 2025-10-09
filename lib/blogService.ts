@@ -157,11 +157,13 @@ export async function getNextOrOldestBlog(
   }
 }
 
+
+
 export async function likeBlogBySlug(slug: string): Promise<number | null> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-
+    
     const result = await db
       .collection("blogs")
       .findOneAndUpdate(
@@ -169,11 +171,11 @@ export async function likeBlogBySlug(slug: string): Promise<number | null> {
         { $inc: { likes: 1 } },
         { returnDocument: "after" }
       );
-    if (!result) {
-      console.error(`No blog found for slug: ${slug}`);
-      return null;
+      if (!result) {
+        console.error(`No blog found for slug: ${slug}`);
+        return null;
     }
-
+    
     return result.likes;
   } catch (error) {
     console.error("Failed to increment blog like count:", error);
@@ -185,22 +187,43 @@ export async function unlikeBlogBySlug(slug: string): Promise<number | null> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-
+    
     const result = await db
-      .collection("blogs")
-      .findOneAndUpdate(
-        { slug },
+    .collection("blogs")
+    .findOneAndUpdate(
+      { slug },
         { $inc: { likes: -1 } },
         { returnDocument: "after" }
       );
-
-    if (!result) {
-      console.error(`Blog with slug "${slug}" not found.`);
-      return null;
-    }
-    return result.likes ?? null;
-  } catch (error) {
-    console.error("Failed to decrement blog like count:", error);
+      
+      if (!result) {
+        console.error(`Blog with slug "${slug}" not found.`);
+        return null;
+      }
+      return result.likes ?? null;
+    } catch (error) {
+      console.error("Failed to decrement blog like count:", error);
     return null;
   }
+}
+
+export async function getAllBlogsForAdmin(): Promise<Blog[]> {
+  const client = await clientPromise;
+  const db = client.db(process.env.MONGODB_DB);
+
+  const posts = await db
+    .collection("blogs")
+    .find({})
+    .sort({ createdAt: -1 })
+    .project({
+      title: 1,
+      slug: 1,
+      author: 1,
+      category: 1,
+      status: 1,
+      createdAt: 1,
+    })
+    .toArray();
+
+  return posts.map(transformBlog);
 }

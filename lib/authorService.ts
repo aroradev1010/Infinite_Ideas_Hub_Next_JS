@@ -49,3 +49,16 @@ export async function getAuthorById(id: string): Promise<Author | null> {
     return null;
   }
 }
+
+export async function getAllAuthorsForAdmin(): Promise<Author[]> {
+  const client = await clientPromise;
+  const db = client.db(process.env.MONGODB_DB);
+  const authors = await db
+    .collection("authors")
+    .find({})
+    .sort({ createdAt: -1 })
+    .project({ name: 1, bio: 1, profileImage: 1, slug: 1, createdAt: 1 })
+    .toArray();
+
+  return authors.map(transformAuthor);
+}

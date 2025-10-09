@@ -1,8 +1,7 @@
-import { isAdmin } from "@/lib/isAdmin";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function AdminPage() {
-    const admin = await isAdmin();
-    if (!admin) return null;
+    await requireRole(["admin"]);
 
     return (
         <section>
