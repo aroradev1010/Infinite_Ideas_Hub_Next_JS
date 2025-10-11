@@ -2,7 +2,7 @@
 import BlogCard from "@/components/BlogCard";
 import StarBackground from "@/components/StarBackground";
 import { getAuthorBySlug } from "@/lib/authorService";
-import { getBlogsByAuthorId } from "@/lib/blogService";
+import { getBlogsByAuthorSlug } from "@/lib/blogService";
 import { notFound } from "next/navigation";
 
 export default async function AuthorDetailPage({
@@ -14,7 +14,8 @@ export default async function AuthorDetailPage({
   const author = await getAuthorBySlug(slug);
   if (!author) return notFound();
 
-  const blogs = await getBlogsByAuthorId(author.id);
+  const blogs = await getBlogsByAuthorSlug(author.slug);
+
 
 
   return (

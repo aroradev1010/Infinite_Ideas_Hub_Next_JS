@@ -62,3 +62,33 @@ export async function getAllAuthorsForAdmin(): Promise<Author[]> {
 
   return authors.map(transformAuthor);
 }
+
+export async function getAuthorByUserId(userId: string) {
+  if (!userId) return null;
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    const _id = ObjectId.isValid(userId) ? new ObjectId(userId) : null;
+
+    // If userId in authors is stored as ObjectId
+    const author = await db.collection("authors").findOne({ userId: _id });
+    if (author) {
+      return {
+        id: author._id.toString(),
+        name: author.name,
+        slug: author.slug,
+        userId: author.userId?.toString?.() ?? null,
+        profileImage: author.profileImage,
+        bio: author.bio,
+        createdAt: author.createdAt?.toISOString?.() ?? "",
+      };
+    }
+
+    // fallback: maybe you used email linking earlier
+    // const authorByEmail = await db.collection("authors").findOne({ email: userEmail });
+    return null;
+  } catch (err) {
+    console.error("getAuthorByUserId error:", err);
+    return null;
+  }
+}

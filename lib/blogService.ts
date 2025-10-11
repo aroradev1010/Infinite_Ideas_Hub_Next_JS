@@ -71,30 +71,49 @@ export async function getAllBlogs(): Promise<Blog[]> {
   }
 }
 
+// ✅ Fetch by authorId directly
 export async function getBlogsByAuthorId(authorId: string): Promise<Blog[]> {
   try {
+    if (!ObjectId.isValid(authorId)) return [];
+
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-
-    // ensure we query by stored authorId (ObjectId)
-    const { ObjectId } = require("mongodb");
-    const query: any = { status: "published" };
-    if (ObjectId.isValid(authorId)) {
-      query.authorId = new ObjectId(authorId);
-    } else {
-      // fallback to nothing
-      return [];
-    }
-
     const blogs = await db
       .collection("blogs")
-      .find(query)
+      .find({ authorId: new ObjectId(authorId), status: "published" })
       .sort({ createdAt: -1 })
       .toArray();
 
     return blogs.map(transformBlog);
-  } catch (err) {
-    console.error("Failed to fetch blogs by author id:", err);
+  } catch (error) {
+    console.error("Failed to fetch blogs by authorId:", error);
+    return [];
+  }
+}
+
+// ✅ New: Fetch by author slug (used in authors/[slug]/page.tsx)
+export async function getBlogsByAuthorSlug(slug: string): Promise<Blog[]> {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+
+    // Step 1: find the author by slug
+    const author = await db.collection("authors").findOne({ slug });
+    if (!author) {
+      console.warn(`No author found for slug: ${slug}`);
+      return [];
+    }
+
+    // Step 2: fetch blogs by authorId (ObjectId)
+    const blogs = await db
+      .collection("blogs")
+      .find({ authorId: author._id, status: "published" })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return blogs.map(transformBlog);
+  } catch (error) {
+    console.error("Failed to fetch blogs by authorSlug:", error);
     return [];
   }
 }
@@ -157,13 +176,11 @@ export async function getNextOrOldestBlog(
   }
 }
 
-
-
 export async function likeBlogBySlug(slug: string): Promise<number | null> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-    
+
     const result = await db
       .collection("blogs")
       .findOneAndUpdate(
@@ -171,11 +188,11 @@ export async function likeBlogBySlug(slug: string): Promise<number | null> {
         { $inc: { likes: 1 } },
         { returnDocument: "after" }
       );
-      if (!result) {
-        console.error(`No blog found for slug: ${slug}`);
-        return null;
+    if (!result) {
+      console.error(`No blog found for slug: ${slug}`);
+      return null;
     }
-    
+
     return result.likes;
   } catch (error) {
     console.error("Failed to increment blog like count:", error);
@@ -187,22 +204,22 @@ export async function unlikeBlogBySlug(slug: string): Promise<number | null> {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-    
+
     const result = await db
-    .collection("blogs")
-    .findOneAndUpdate(
-      { slug },
+      .collection("blogs")
+      .findOneAndUpdate(
+        { slug },
         { $inc: { likes: -1 } },
         { returnDocument: "after" }
       );
-      
-      if (!result) {
-        console.error(`Blog with slug "${slug}" not found.`);
-        return null;
-      }
-      return result.likes ?? null;
-    } catch (error) {
-      console.error("Failed to decrement blog like count:", error);
+
+    if (!result) {
+      console.error(`Blog with slug "${slug}" not found.`);
+      return null;
+    }
+    return result.likes ?? null;
+  } catch (error) {
+    console.error("Failed to decrement blog like count:", error);
     return null;
   }
 }
@@ -226,4 +243,90 @@ export async function getAllBlogsForAdmin(): Promise<Blog[]> {
     .toArray();
 
   return posts.map(transformBlog);
+}
+
+export type CreateBlogInput = {
+  title: string;
+  description: string; // HTML or markdown string (you use dangerouslySetInnerHTML)
+  image?: string;
+  category?: string;
+  slug?: string;
+  status?: "published" | "draft";
+  // authorId is resolved from session -> author doc; we don't accept raw authorId from client
+};
+
+export async function createBlog(
+  input: CreateBlogInput,
+  authorUserId: string
+): Promise<Blog | null> {
+  try {
+    // Resolve author document by users._id == authorUserId
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+
+    if (!ObjectId.isValid(authorUserId)) {
+      console.error("Invalid authorUserId:", authorUserId);
+      return null;
+    }
+    const userObjId = new ObjectId(authorUserId);
+
+    // Find author doc that has userId === userObjId
+    const authorDoc = await db
+      .collection("authors")
+      .findOne({ userId: userObjId });
+    if (!authorDoc) {
+      console.error("No author document found for userId:", authorUserId);
+      return null;
+    }
+
+    // Generate slug if not provided; ensure uniqueness
+    const makeSlug = (s: string) =>
+      s
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+
+    let baseSlug = input.slug
+      ? makeSlug(input.slug)
+      : makeSlug(input.title || `post-${Date.now()}`);
+    if (!baseSlug) baseSlug = `post-${Date.now()}`;
+    let finalSlug = baseSlug;
+    let counter = 1;
+    while (await db.collection("blogs").findOne({ slug: finalSlug })) {
+      finalSlug = `${baseSlug}-${counter++}`;
+      if (counter > 1000) break;
+    }
+
+    // Build blog document
+    const now = new Date();
+    const blogDoc: any = {
+      title: input.title,
+      description: input.description,
+      image: input.image || "/fallback.avif",
+      category: input.category || "Uncategorized",
+      slug: finalSlug,
+      likes: 0,
+      status: input.status || "draft",
+      createdAt: now,
+      updatedAt: now,
+
+      // Denormalized author fields for quick reads:
+      authorId: authorDoc._id, // ObjectId referencing authors collection
+      authorName: authorDoc.name ?? "",
+      authorSlug: authorDoc.slug ?? null,
+    };
+
+    // Insert
+    const res = await db.collection("blogs").insertOne(blogDoc);
+    const inserted = await db
+      .collection("blogs")
+      .findOne({ _id: res.insertedId });
+    return inserted ? transformBlog(inserted) : null;
+  } catch (err) {
+    console.error("createBlog error:", err);
+    return null;
+  }
 }

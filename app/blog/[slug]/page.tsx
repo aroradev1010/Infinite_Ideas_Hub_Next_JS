@@ -33,6 +33,11 @@ export default async function BlogPage({ params }: Props) {
   const nextBlog = await getNextOrOldestBlog(new Date(blog.createdAt));
   const blogId = blog.id.toString();
 
+  // server-side debug (will print to terminal)
+  console.log("BLOG DESCRIPTION TYPE:", typeof blog.description);
+  console.log("BLOG DESCRIPTION (start):", JSON.stringify(blog.description).slice(0, 500));
+
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="mb-3 text-md font-bold tracking-wider flex w-full justify-between">

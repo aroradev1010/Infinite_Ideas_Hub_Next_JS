@@ -1,22 +1,33 @@
 // app/dashboard/page.tsx
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { ObjectId } from "mongodb";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
 import { getBlogsByAuthorId } from "@/lib/blogService";
 import { requireRole } from "@/lib/requireRole";
+import { getAuthorByUserId } from "@/lib/authorService";
 
 export default async function DashboardPage() {
-    const session = await getServerSession(authOptions);
+    const session = await requireRole(["author", "admin"]); // will throw Response if not allowed
 
-    // 1️⃣ Ensure only authors/admins can access
-    if (!session) redirect("/auth/sign-in");
-    await requireRole(["admin", "author"]);
+    // find the author document for this user
+    const userId = session.user.id as string;
+    const author = await getAuthorByUserId(userId);
 
-    const authorId = new ObjectId(session.user.id);
-    const blogs = await getBlogsByAuthorId(authorId.toString())
+    if (!author) {
+        // no author record for this user -> either redirect to "apply to be author" or show message
+        return (
+            <section className="space-y-6">
+                <header className="flex items-center justify-between">
+                    <h1 className="text-3xl font-bold">My Blogs</h1>
+                </header>
+                <p className="text-gray-400 mt-10 text-lg">
+                    You are not an author yet. Ask an admin to promote you or create an author profile.
+                </p>
+            </section>
+        );
+    }
+
+    // use author.id which is the authors._id
+    const blogs = await getBlogsByAuthorId(author.id);
 
 
     return (
