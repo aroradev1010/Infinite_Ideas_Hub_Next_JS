@@ -3,7 +3,7 @@ export interface SendSubscriptionResponse {
   already: boolean;
 }
 
-export async function sendSubscription(
+export async function sendSubscriptionEmail(
   email: string
 ): Promise<SendSubscriptionResponse> {
   const res = await fetch("/api/sendConfirmationEmail", {

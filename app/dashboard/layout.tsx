@@ -35,6 +35,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
                             📝 My Blogs
                         </Link>
                         <Link
+                            href="/dashboard/drafts"
+                            className={cn(
+                                "block hover:text-green-400 transition-colors duration-200"
+                            )}
+                        >
+                            📝 My Drafts
+                        </Link>
+                        <Link
                             href="/dashboard/create"
                             className={cn(
                                 "block hover:text-green-400 transition-colors duration-200"

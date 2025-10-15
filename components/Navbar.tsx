@@ -36,6 +36,20 @@ export const Navbar = () => {
     };
   }, [isMenuOpen]);
 
+  const [isSubscriber, setIsSubscriber] = useState(false);
+
+  useEffect(() => {
+    const checkSubscriber = async () => {
+      if (session?.user?.email) {
+        const res = await fetch(`/api/checkSubscriber?email=${encodeURIComponent(session.user.email)}`);
+        const data = await res.json();
+        setIsSubscriber(data.exists);
+      }
+    };
+    checkSubscriber();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.email]);
+
   return (
     <div className={`max-w-7xl mx-auto ${isMenuOpen ? "" : ""}`}>
       <div className="flex items-center justify-between py-4 px-4 relative">
@@ -68,10 +82,10 @@ export const Navbar = () => {
                   <LogOut />
                   LogOut
                 </Button>
-                <PrimaryButton
+                {!isSubscriber && (<PrimaryButton
                   className={`uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex `}
                   text="Subscribe"
-                />
+                />)}
               </>
             ) : (
               <>
@@ -124,18 +138,21 @@ export const Navbar = () => {
             {session?.user ? (
               <>
                 <li>
-                  <Link
-                    href="/subscribe"
-                    onClick={toggleMenu}
-                    className={cn(
-                      "text-2xl font-bold transition",
-                      pathname === "/subscribe"
-                        ? "text-primary"
-                        : "hover:text-primary"
-                    )}
-                  >
-                    Subscribe
-                  </Link>
+                  {!isSubscriber && (
+
+                    <Link
+                      href="/subscribe"
+                      onClick={toggleMenu}
+                      className={cn(
+                        "text-2xl font-bold transition",
+                        pathname === "/subscribe"
+                          ? "text-primary"
+                          : "hover:text-primary"
+                      )}
+                    >
+                      Subscribe
+                    </Link>
+                  )}
                 </li>
 
                 <li>

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Input } from "./ui/input";
 import PrimaryButton from "./PrimaryButton";
 import { cn } from "@/lib/utils";
-import { sendSubscription } from "@/lib/SubscriptionService";
+import { sendSubscriptionEmail } from "@/lib/SubscriptionService";
 import ProfileSubsribeImages from "./ProfileSubsribeImages";
 
 const EmailSchema = z.string().email();
@@ -36,8 +36,8 @@ export default function SubscribeSection({
     }
 
     setIsLoading(true);
-    try {
-      const { already } = await sendSubscription(result.data);
+    try {      
+      const { already } = await sendSubscriptionEmail(result.data);
       toast(
         already ? "You’ve already subscribed." : "Check your inbox to confirm!",
         {
