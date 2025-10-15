@@ -69,8 +69,9 @@ export default async function DashboardPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {blogs.map((blog: any) => (
-                                <tr key={blog.id.toString()} className="border-t border-gray-800">
+                            {blogs.map((blog: any) => {
+                                // console.log(blog);
+                                return <tr key={blog.id.toString()} className="border-t border-gray-800">
                                     <td className="p-3 font-semibold text-white">{blog.title}</td>
                                     <td className="p-3 text-gray-400">{blog.category || "—"}</td>
                                     <td className="p-3">
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
                                     <td className="p-3 text-gray-400">{formatDate(blog.createdAt)}</td>
                                     <td className="p-3 text-right space-x-2">
                                         <Link
-                                            href={`/dashboard/edit/${blog._id}`}
+                                            href={`/dashboard/edit/${blog.id}`}
                                             className="text-blue-400 hover:underline"
                                         >
                                             Edit
@@ -102,7 +103,7 @@ export default async function DashboardPage() {
                                         </Link>
                                     </td>
                                 </tr>
-                            ))}
+                            })}
                         </tbody>
                     </table>
                 </div>

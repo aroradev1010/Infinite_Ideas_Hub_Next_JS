@@ -14,7 +14,7 @@ type Draft = {
 };
 
 const AUTOSAVE_KEY = "ii_hub_local_draft_v1";
-const DEFAULT_DEBOUNCE = 1500;
+const DEFAULT_DEBOUNCE = 10000;
 
 export function useAutosaveDraft(opts?: { initialBlogId?: string | null; debounceMs?: number }) {
     const { initialBlogId = null, debounceMs = DEFAULT_DEBOUNCE } = opts || {};

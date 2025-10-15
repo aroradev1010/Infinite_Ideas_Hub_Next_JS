@@ -31,7 +31,7 @@ export default function DraftEditorClient({ initialDraft }: { initialDraft: Init
     const draftId = initialDraft.draftId;
     const blogId = initialDraft.blogId ?? null;
 
-    const categories = useMemo(() => ["General", "Tech", "Productivity", "Design", "Uncategorized"], []);
+    const categories = useMemo(() => ["Backend", "JavaScript", "React", "TypeScript"], []);
 
     const plainTextLength = useCallback((html: string) => {
         if (!html) return 0;

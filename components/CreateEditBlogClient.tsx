@@ -35,7 +35,7 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
     const [isSaving, setIsSaving] = useState(false);
 
     // categories (could be fetched later)
-    const categories = useMemo(() => ["General", "Tech", "Productivity", "Design", "Uncategorized"], []);
+    const categories = useMemo(() => ["Backend", "JavaScript", "React", "TypeScript"], []);
 
     // autosave + local/server sync
     const { scheduleAutosave, clearLocalDraft, loadLocalDraft, isSyncing } = useAutosaveDraft({
@@ -139,7 +139,7 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
                 if (mode === "publish") {
                     if (initialBlog && initialBlog.id) {
                         // edit existing published/draft blog
-                        const res = await fetch(`/api/blogs?id=${initialBlog.id}`, {
+                        const res = await fetch(`/api/blog?id=${initialBlog.id}`, {
                             method: "PATCH",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -160,7 +160,7 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
                         return;
                     } else {
                         // create new blog and publish
-                        const res = await fetch("/api/blogs", {
+                        const res = await fetch("/api/blog", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -186,7 +186,7 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
                 if (mode === "draft") {
                     if (initialBlog && initialBlog.id) {
                         // edit existing blog and save as draft
-                        const res = await fetch(`/api/blogs?id=${initialBlog.id}`, {
+                        const res = await fetch(`/api/blog?id=${initialBlog.id}`, {
                             method: "PATCH",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({

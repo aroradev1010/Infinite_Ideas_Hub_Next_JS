@@ -12,7 +12,7 @@ interface Props {
 export default async function EditDraftPage({ params }: Props) {
     const session = await requireRole(["author", "admin"]);
     const userId = session.user?.id;
-    const { draftId } = params;
+    const { draftId } = await params;
 
     if (!ObjectId.isValid(draftId)) return notFound();
 
