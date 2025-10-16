@@ -2,6 +2,7 @@
 import clientPromise from "./mongodb";
 import { transformBlog } from "@/models/blogModel";
 import { Blog } from "@/types/blogType";
+import { BlogInsert } from "@/types/db";
 import { ObjectId } from "mongodb";
 
 export async function getFeaturedBlog(): Promise<Blog | null> {
@@ -302,7 +303,7 @@ export async function createBlog(
 
     // Build blog document
     const now = new Date();
-    const blogDoc: any = {
+    const blogDoc: BlogInsert = {
       title: input.title,
       description: input.description,
       image: input.image || "/fallback.avif",

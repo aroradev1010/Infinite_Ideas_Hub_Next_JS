@@ -14,8 +14,8 @@ export default function FeaturedArticle({ blog }: Props) {
       </h1>
       <BlogCard
         blog={blog}
-        classNameDesktopImage="w-[430px] h-[200px] rounded-xl"
-        webkitLineCLamp={5}
+        classNameDesktopImage="w-[430px] h-[280px] rounded-xl"
+        webkitLineCLamp={3}
       />
     </div>
   );

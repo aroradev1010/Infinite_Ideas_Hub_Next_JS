@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, user }) {
       // Attach id and role to session
       session.user.id = user.id;
-      session.user.role = (user as any).role || "user";
+      session.user.role = (user).role || "user";
       return session;
     },
   },

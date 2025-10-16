@@ -42,9 +42,10 @@ export default function DraftsList({ initialDrafts }: { initialDrafts: DraftRow[
                             if (!res.ok) throw new Error(data?.error || "Delete failed");
                             setDrafts((prev) => prev.filter((x) => x.id !== id));
                             toast.success("Draft deleted.");
-                        } catch (err: any) {
+                        } catch (err) {
                             console.error("Delete draft error:", err);
-                            toast.error(err?.message || "Failed to delete draft.");
+                            const errorMessage = err instanceof Error ? err.message : "Failed to delete draft.";
+                            toast.error(errorMessage);
                         } finally {
                             toast.dismiss(t);
                         }

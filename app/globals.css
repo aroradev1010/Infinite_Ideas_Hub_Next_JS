@@ -123,90 +123,179 @@
 body {
   font-family: var(--font-nunito);
 }
+/* ===================== BLOG DESCRIPTION ===================== */
 
-.blogDescription h1 {
-  @apply text-2xl font-bold mb-5 text-white;
+.blogDescription {
+  @apply leading-relaxed tracking-wide text-base md:text-lg text-gray-300;
+  line-height: 1.9;
+  font-weight: 400;
+  overflow-wrap: break-word;
 }
 
+/* Headings (balanced hierarchy for readability) */
+.blogDescription h1 {
+  @apply text-4xl md:text-5xl font-extrabold mt-10 mb-6 text-white tracking-tight;
+  line-height: 1.2;
+}
+
+.blogDescription h2 {
+  @apply text-3xl md:text-4xl font-bold mt-10 mb-4 text-white tracking-tight;
+}
+
+.blogDescription h3 {
+  @apply text-2xl md:text-3xl font-semibold mt-8 mb-3 text-gray-100;
+}
+
+.blogDescription h4 {
+  @apply text-xl font-semibold mt-6 mb-3 text-gray-200;
+}
+
+.blogDescription h5 {
+  @apply text-lg font-semibold mt-5 mb-2 text-gray-300 uppercase tracking-widest;
+}
+
+/* Paragraphs */
 .blogDescription p {
-  @apply tracking-widest leading-8 text-xl text-gray-400 mb-6;
+  @apply text-lg leading-8 mb-6 text-gray-400;
+}
+
+/* Inline code */
+.blogDescription code {
+  @apply bg-gray-800 text-sky-400 px-2 py-1 rounded font-mono text-sm md:text-base;
+  font-weight: 500;
+}
+
+/* Code blocks */
+.blogDescription pre {
+  @apply bg-[#0a0a0a] text-gray-200 p-4 md:p-6 rounded-xl my-8 overflow-x-auto border border-gray-800;
+  font-family: 'Fira Code', monospace;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+/* Lists */
+.blogDescription ul,
+.blogDescription ol {
+  @apply mb-8 pl-6 text-gray-300 text-base md:text-lg leading-8;
 }
 
 .blogDescription ul {
-  @apply list-disc list-inside pl-6 mb-6 text-gray-300 text-lg;
+  @apply list-disc;
 }
 
 .blogDescription ol {
-  @apply list-decimal list-inside pl-6 mb-6 text-gray-300 text-lg;
+  @apply list-decimal;
 }
 
 .blogDescription li {
-  @apply mb-2;
+  @apply mb-3;
 }
 
-.blogDescription a {
-  @apply text-sky-400 underline hover:text-sky-300;
+/* Blockquote */
+.blogDescription blockquote {
+  @apply border-l-4 border-primary/70 pl-6 italic text-gray-400 my-8;
 }
 
-.blogDescription code {
-  @apply bg-gray-900 text-white px-1 py-0.5 rounded font-mono text-xl;
-}
-
-.blogDescription pre {
-  @apply bg-gray-900 text-gray-100 p-4 my-6 rounded-lg overflow-x-auto text-sm leading-relaxed;
-}
-
+/* Horizontal Rule */
 .blogDescription hr {
-  @apply border-t border-gray-700 my-10;
+  @apply border-t border-gray-700 my-12;
 }
 
+/* Links */
+.blogDescription a {
+  @apply text-sky-400 underline decoration-2 underline-offset-4 hover:text-sky-300 transition-colors;
+}
+
+/* Images */
+.blogDescription img {
+  @apply rounded-lg shadow-lg my-8 mx-auto max-w-full h-auto;
+}
+
+/* Figures & captions */
+.blogDescription figure {
+  @apply my-8 text-center;
+}
+
+.blogDescription figcaption {
+  @apply text-sm text-gray-500 italic mt-2;
+}
+
+/* Tables */
+.blogDescription table {
+  @apply w-full border-collapse my-8 text-gray-300;
+}
+
+.blogDescription th {
+  @apply bg-gray-900 text-white font-semibold border border-gray-700 px-4 py-2;
+}
+
+.blogDescription td {
+  @apply border border-gray-800 px-4 py-2;
+}
+
+/* Quotes and callouts */
+.blogDescription .callout {
+  @apply bg-gray-800/60 border-l-4 border-primary p-4 rounded-md my-6;
+}
+
+/* Inline highlights */
+.blogDescription mark {
+  @apply bg-yellow-500/20 text-yellow-300 px-1 rounded;
+}
+
+/* Strong emphasis */
 .blogDescription strong {
-  @apply font-semibold text-white;
+  @apply font-bold text-white;
 }
 
+/* Italics */
+.blogDescription em {
+  @apply text-gray-300 italic;
+}
 
+/* Scrollbar improvements */
 .blogDescription::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .blogDescription::-webkit-scrollbar-track {
-  @apply bg-gray-800;
+  @apply bg-gray-900;
 }
 
 .blogDescription::-webkit-scrollbar-thumb {
-  @apply bg-gray-600 rounded;
+  @apply bg-gray-700 rounded-lg;
 }
 
 .blogDescription::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-500;
 }
 
-/* For horizontal scroll inside code blocks */
+/* ===================== CODE BLOCK SCROLLBAR ===================== */
 .blogDescription pre::-webkit-scrollbar {
-  height: 6px;
-}
-
-.blogDescription pre::-webkit-scrollbar-track {
-  @apply bg-gray-800;
+  height: 8px;
 }
 
 .blogDescription pre::-webkit-scrollbar-thumb {
-  @apply bg-gray-600 rounded;
+  @apply bg-gray-700 rounded;
 }
 
 .blogDescription pre::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-500;
 }
 
-
-.blogDescriptionError img,
-.blogDescriptionError iframe,
-.blogDescriptionError pre,
-.blogDescriptionError code {
-  max-width: 100%;
-  overflow: hidden;
-  word-break: break-word;
-  white-space: pre-wrap;
-  display: block;
+/* ===================== RESPONSIVE TUNING ===================== */
+@media (max-width: 768px) {
+  .blogDescription h1 {
+    font-size: 2rem;
+  }
+  .blogDescription h2 {
+    font-size: 1.75rem;
+  }
+  .blogDescription h3 {
+    font-size: 1.5rem;
+  }
+  .blogDescription p {
+    font-size: 1rem;
+  }
 }

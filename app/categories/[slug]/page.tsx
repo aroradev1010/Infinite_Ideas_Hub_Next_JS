@@ -35,7 +35,7 @@ export default async function CategoryDetailPage({
             <BlogCard
               key={blog.slug}
               blog={blog}
-              webkitLineCLamp={4}
+              webkitLineCLamp={3}
               classNameDesktopImage="w-full rounded-xl h-[200px]"
             />
             <div className="my-10" />

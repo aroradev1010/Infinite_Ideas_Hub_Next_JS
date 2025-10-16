@@ -64,7 +64,7 @@ export default function BlogCard({
         <Link href={`/blog/${blog.slug}`} key={blog.id}>
           <div className="tracking-wide text-gray-400 mb-5 overflow-hidden">
             <div
-              className="blogDescriptionError "
+              className="blogDescription "
               style={{
                 display: "-webkit-box",
                 WebkitLineClamp: webkitLineCLamp || 3,

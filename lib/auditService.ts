@@ -15,7 +15,7 @@ export type AuditEntry = {
   by: string | null;
   targetId?: string | null;
   targetType?: string | null;
-  meta?: Record<string, any> | null;
+  meta?: Record<string, unknown> | null;
   createdAt?: Date;
 };
 

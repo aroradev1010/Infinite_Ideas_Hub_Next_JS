@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       authorUserId
     );
 
-    console.log("Created blog:", blog);
+    
 
     if (!blog) {
       return NextResponse.json(
@@ -183,7 +183,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
-    console.log("Updated blog:", result);
+    
 
     // return the updated blog (minimal projection to avoid leaking)
     const updated = {

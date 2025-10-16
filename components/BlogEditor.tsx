@@ -50,7 +50,9 @@ export default function BlogEditor({ initialHtml = "", onUpdate, className = "" 
         editor.on("update", handler);
         // call once with initial content
         handler();
-        return () => editor.off("update", handler);
+        return () => {
+            editor.off("update", handler);
+        };
     }, [editor, onUpdate]);
 
     // sync initialHtml if it changes

@@ -33,9 +33,7 @@ export default async function BlogPage({ params }: Props) {
   const nextBlog = await getNextOrOldestBlog(new Date(blog.createdAt));
   const blogId = blog.id.toString();
 
-  // server-side debug (will print to terminal)
-  console.log("BLOG DESCRIPTION TYPE:", typeof blog.description);
-  console.log("BLOG DESCRIPTION (start):", JSON.stringify(blog.description).slice(0, 500));
+
 
 
   return (
@@ -90,7 +88,7 @@ export default async function BlogPage({ params }: Props) {
                 "
                   className="text-lg mb-10"
                 />
-                
+
               </Link>
             </div>
           </div>
@@ -119,7 +117,7 @@ export default async function BlogPage({ params }: Props) {
                 {nextBlog.title}
               </h2>
               <div
-                className="tracking-wide line-clamp-3 text-gray-400 mb-5 blogDescriptionError"
+                className="tracking-wide line-clamp-3 text-gray-400 mb-5 blogDescription"
                 dangerouslySetInnerHTML={{
                   __html: nextBlog && nextBlog.description,
                 }}

@@ -69,9 +69,9 @@ export default async function DashboardPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {blogs.map((blog: any) => {
-                                // console.log(blog);
-                                return <tr key={blog.id.toString()} className="border-t border-gray-800">
+                            {blogs.map((blog: any) => (
+
+                                <tr key={blog.id.toString()} className="border-t border-gray-800">
                                     <td className="p-3 font-semibold text-white">{blog.title}</td>
                                     <td className="p-3 text-gray-400">{blog.category || "—"}</td>
                                     <td className="p-3">
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
                                         </Link>
                                     </td>
                                 </tr>
-                            })}
+                            ))}
                         </tbody>
                     </table>
                 </div>
