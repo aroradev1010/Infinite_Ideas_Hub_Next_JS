@@ -2,7 +2,7 @@
 import BlogCard from "@/components/BlogCard";
 import StarBackground from "@/components/StarBackground";
 import { getAuthorBySlug } from "@/lib/authorService";
-import { getBlogsByAuthorSlug } from "@/lib/blogService";
+import { getBlogsByAuthorSlug } from "@/lib/blogService.server";
 import { notFound } from "next/navigation";
 
 export default async function AuthorDetailPage({

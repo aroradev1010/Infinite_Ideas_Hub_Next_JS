@@ -1,7 +1,7 @@
 // app/page.tsx
 import StarBackground from "@/components/StarBackground";
 import FeaturedArticle from "@/components/FeaturedArticle";
-import { getFeaturedBlog } from "@/lib/blogService";
+import { getFeaturedBlog } from "@/lib/blogService.server";
 import LatestArticles from "@/components/LatestArticles";
 import SubscribeSection from "@/components/SubscribeSection";
 import PopularCategories from "@/components/PopularCategories";

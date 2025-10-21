@@ -1,32 +1,13 @@
 // types/db.ts
-import { ObjectId } from "mongodb";
-
 /**
- * Shape used to insert blog documents into MongoDB (authorId is ObjectId)
+ * Generic API response shape used across all client fetchers and routes.
+ * Keeps consistency between server and client.
  */
-export interface BlogInsert {
-  title: string;
-  description: string;
-  image: string;
-  category: string;
-  slug: string;
-  likes: number;
-  status: "published" | "draft";
-  createdAt: Date;
-  updatedAt: Date;
-  authorId: ObjectId;
-  authorName: string;
-  authorSlug?: string | null;
+export interface ApiResponse<T = any> {
+  ok: boolean;
+  data?: T;
+  error?: string;
+  status?: number;
+  [key: string]: any;
 }
 
-/**
- * User item returned by admin/user listings
- */
-export interface UserListItem {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  image: string;
-  createdAt: string;
-}

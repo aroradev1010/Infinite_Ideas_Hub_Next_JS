@@ -1,70 +1,42 @@
+// components/CreateEditBlogClient.tsx
 "use client";
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { saveDraft as saveDraftAPI } from "@/lib/draftService";
-import { useAutosaveDraft } from "@/hooks/useAutoSaveDraft";
 
-// dynamic import so tiptap doesn’t load server-side
-const BlogEditor = dynamic(() => import("./BlogEditor"), { ssr: false });
+import { saveDraft } from "@/lib/draftService";
+import { createBlog, updateBlog } from "@/lib/blogService.client";
+import type { Blog, BlogInput } from "@/types/blogType";
+import type { DraftInput } from "@/types/draftType";
 
-// shape of blog data (for both edit and create)
-type BlogShape = {
-    id?: string;
-    title?: string;
-    description?: string;
-    image?: string;
-    category?: string;
-    slug?: string;
-    status?: "published" | "draft";
-};
+const BlogEditor = dynamic(() => import("./editor/BlogEditor"), { ssr: false });
 
-export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: BlogShape | null }) {
+
+export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Blog | null }) {
     const router = useRouter();
 
-    // form state
-    const [title, setTitle] = useState(initialBlog?.title || "");
-    const [category, setCategory] = useState(initialBlog?.category || "");
-    const [image, setImage] = useState(initialBlog?.image || "");
-    const [status, setStatus] = useState<"published" | "draft">(initialBlog?.status || "draft");
-    const [editorHtml, setEditorHtml] = useState(initialBlog?.description || "");
-    const [draftId, setDraftId] = useState<string | null>(null);
-
+    // --- Form state ---
+    const [title, setTitle] = useState(initialBlog?.title ?? "");
+    const [category, setCategory] = useState(initialBlog?.category ?? "");
+    const [image, setImage] = useState(initialBlog?.image ?? "");
+    const [status, setStatus] = useState<"published" | "draft">(initialBlog?.status ?? "draft");
+    const [editorHtml, setEditorHtml] = useState(initialBlog?.description ?? "");
     const [isSaving, setIsSaving] = useState(false);
 
-    // categories (could be fetched later)
+    // track server draft id if user saves a draft (so subsequent Save Draft updates same server draft)
+    const [serverDraftId, setServerDraftId] = useState<string | null>(null);
+
+    // categories — replace with fetch if dynamic
     const categories = useMemo(() => ["Backend", "JavaScript", "React", "TypeScript"], []);
 
-    // autosave + local/server sync
-    const { scheduleAutosave, clearLocalDraft, loadLocalDraft, isSyncing } = useAutosaveDraft({
-        initialBlogId: initialBlog?.id ?? null,
-    });
-
-    // helper: strip HTML for validation
+    // --- Helpers ---
     const plainTextLength = useCallback((html: string) => {
         if (!html) return 0;
         return html.replace(/<[^>]*>/g, "").replace(/\&[^\s;]+;/g, "").trim().length;
     }, []);
 
-    // handle tiptap editor updates
-    const handleEditorUpdate = useCallback(
-        (html: string) => {
-            setEditorHtml(html);
-            scheduleAutosave({
-                title,
-                category,
-                image,
-                status,
-                description: html,
-                blogId: initialBlog?.id ?? null,
-            });
-        },
-        [title, category, image, status, scheduleAutosave, initialBlog?.id]
-    );
-
-    // validation rules for publishing
     const validatePublish = useCallback(() => {
         if (!title || title.trim().length < 3) {
             toast.error("Please provide a title (min 3 characters).");
@@ -77,162 +49,92 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
         return true;
     }, [title, editorHtml, plainTextLength]);
 
-    // restore local draft content into editor
-    const restoreLocalDraftToForm = useCallback(() => {
-        const d = loadLocalDraft();
-        if (!d) {
-            toast.error("No local draft found.");
+    // --- Editor callback ---
+    const handleEditorUpdate = useCallback((html: string) => {
+        setEditorHtml(html);
+    }, []);
+
+    // --- Save Draft handler (user action) ---
+    const handleSaveDraft = useCallback(async () => {
+        const html = editorHtml || "";
+        const hasContent = (title && title.trim()) || plainTextLength(html) > 0 || (image && image.trim());
+        if (!hasContent) {
+            toast.error("Add some content before saving a draft.");
             return;
         }
-        setTitle(d.title || "");
-        setCategory(d.category || "");
-        setImage(d.image || "");
-        setStatus((d.status as any) || "draft");
-        setEditorHtml(d.description || "");
-        toast.success("Local draft restored.");
-    }, [loadLocalDraft]);
 
-    // ✅ on mount — check for a local draft and show toast if found
-    useEffect(() => {
+        setIsSaving(true);
         try {
-            const d = loadLocalDraft();
-            const hasLocal =
-                d &&
-                ((d.title && d.title.trim()) ||
-                    (d.description && plainTextLength(d.description) > 0) ||
-                    (d.image && d.image.trim()));
+            // Explicitly type the payload so TS checks the union types correctly
+            const payload: DraftInput = {
+                draftId: serverDraftId ?? undefined,
+                title: title.trim(),
+                description: html,
+                image: image?.trim() || "",
+                category,
+                // ensure this is seen as the literal union type
+                status: ("draft" as const),
+                blogId: initialBlog?.id ?? null,
+            };
 
-            if (hasLocal) {
-                toast("Local draft available", {
-                    description: "You can restore your unsaved progress.",
-                    action: {
-                        label: "Restore",
-                        onClick: restoreLocalDraftToForm,
-                    },
-                });
+            const resp = await saveDraft(payload);
+
+            if (!resp.ok) {
+                throw new Error(resp.error || "Failed to save draft");
             }
-        } catch {
-            // ignore parsing errors
-        }
-    }, [loadLocalDraft, plainTextLength, restoreLocalDraftToForm]);
 
-    // ---------- Main save handler ----------
-    const handleSave = useCallback(
-        async (mode: "draft" | "publish") => {
-            const finalStatus = mode === "publish" ? "published" : "draft";
+            toast.success("Draft saved to your drafts.");
+            if (resp.draft?.id) setServerDraftId(resp.draft.id);
+        } catch (err: any) {
+            console.error("Save draft error:", err);
+            toast.error(err?.message || "Failed to save draft");
+        } finally {
+            setIsSaving(false);
+        }
+    }, [editorHtml, title, image, category, serverDraftId, initialBlog?.id, plainTextLength]);
+
+    // --- Publish handler ---
+    const handlePublish = useCallback(
+        async (mode: "publish" | "publish-update") => {
             const html = editorHtml || "";
 
-            if (mode === "publish" && !validatePublish()) return;
-
-            if (mode === "draft") {
-                const hasContent =
-                    (title && title.trim()) || plainTextLength(html) > 0 || (image && image.trim());
-                if (!hasContent) {
-                    toast.error("Add some content before saving a draft.");
-                    return;
-                }
-            }
+            if (!validatePublish()) return;
 
             setIsSaving(true);
             try {
-                // --------------- PUBLISH FLOW ---------------
-                if (mode === "publish") {
-                    if (initialBlog && initialBlog.id) {
-                        // edit existing published/draft blog
-                        const res = await fetch(`/api/blog?id=${initialBlog.id}`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                title: title.trim(),
-                                description: html,
-                                image: image?.trim() || "",
-                                category: category || "Uncategorized",
-                                status: finalStatus,
-                                slug: initialBlog.slug || undefined,
-                            }),
-                        });
+                const input: BlogInput = {
+                    title: title.trim(),
+                    description: html,
+                    image: image?.trim() || "",
+                    category: category || "Uncategorized",
+                    status: "published",
+                };
 
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data?.error || "Failed to update blog");
-                        toast.success("Blog updated and published.");
-                        clearLocalDraft();
-                        router.push("/dashboard");
-                        return;
-                    } else {
-                        // create new blog and publish
-                        const res = await fetch("/api/blog", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                title: title.trim(),
-                                description: html,
-                                image: image?.trim() || "",
-                                category: category || "Uncategorized",
-                                status: finalStatus,
-                            }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data?.error || "Failed to create blog");
-                        toast.success("Blog created and published.");
-                        try {
-                            localStorage.removeItem("ii_hub_local_draft_v1");
-                        } catch { }
-                        router.push("/dashboard");
-                        return;
-                    }
+                if (initialBlog && initialBlog.id) {
+                    // update existing blog
+                    const res = await updateBlog(initialBlog.id, input);
+                    if (!res.ok) throw new Error(res.error || "Failed to update blog");
+                    toast.success("Blog updated and published.");
+                    router.push("/dashboard");
+                    return;
                 }
 
-                // --------------- DRAFT FLOW ---------------
-                if (mode === "draft") {
-                    if (initialBlog && initialBlog.id) {
-                        // edit existing blog and save as draft
-                        const res = await fetch(`/api/blog?id=${initialBlog.id}`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                title: title.trim(),
-                                description: html,
-                                image: image?.trim() || "",
-                                category: category || "Uncategorized",
-                                status: "draft",
-                                slug: initialBlog.slug || undefined,
-                            }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data?.error || "Failed to save draft");
-                        toast.success("Draft saved for this post.");
-                        clearLocalDraft();
-                        router.push("/dashboard");
-                        return;
-                    } else {
-                        // create new server-side draft
-                        const r = await saveDraftAPI({
-                            title: title.trim(),
-                            description: html,
-                            image: image?.trim() || "",
-                            category,
-                            status: "draft",
-                            blogId: null,
-                        });
-                        if (!r.ok) throw new Error(r.error || "Failed to save draft");
-                        toast.success("Draft saved to your drafts.");
-                        try {
-                            window.location.reload();
-                            clearLocalDraft()
-                        } catch { }
-                        return;
-                    }
-                }
+                // create new blog
+                const createRes = await createBlog(input);
+                if (!createRes.ok) throw new Error(createRes.error || "Failed to create blog");
+                toast.success("Blog created and published.");
+                router.push("/dashboard");
             } catch (err: any) {
-                console.error(err);
-                toast.error(err.message || "Failed to save");
+                console.error("Publish error:", err);
+                toast.error(err?.message || "Failed to publish");
             } finally {
                 setIsSaving(false);
             }
         },
-        [title, editorHtml, image, category, initialBlog, clearLocalDraft, router, plainTextLength, validatePublish]
+        [editorHtml, title, image, category, initialBlog, validatePublish, router]
     );
 
+    // --- UI ---
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="space-y-2">
@@ -244,11 +146,7 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
                 />
 
                 <div className="flex items-center gap-4">
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="border rounded p-2 bg-black"
-                    >
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="border rounded p-2 bg-black">
                         <option value="">Select category</option>
                         {categories.map((c) => (
                             <option key={c} value={c}>
@@ -266,11 +164,7 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
 
                     <div className="flex items-center gap-2">
                         <label className="text-sm text-gray-400">Status</label>
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value as any)}
-                            className="border rounded p-1 bg-black"
-                        >
+                        <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="border rounded p-1 bg-black">
                             <option value="draft">Draft</option>
                             <option value="published">Published</option>
                         </select>
@@ -280,43 +174,25 @@ export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Bl
                 {image ? (
                     <div className="mt-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={image}
-                            alt="thumbnail preview"
-                            className="w-full max-h-56 object-cover rounded"
-                        />
+                        <img src={image} alt="thumbnail preview" className="w-full max-h-56 object-cover rounded" />
                     </div>
                 ) : null}
             </div>
 
             <div>
-                <BlogEditor
-                    initialHtml={initialBlog?.description || ""}
-                    onUpdate={(html) => {
-                        setEditorHtml(html);
-                        handleEditorUpdate(html);
-                    }}
-                />
+                <BlogEditor initialHtml={initialBlog?.description || ""} onUpdate={(html) => handleEditorUpdate(html)} />
             </div>
 
             <div className="flex gap-3 justify-end items-center">
-                <div className="text-sm text-gray-400 mr-auto">
-                    {isSyncing ? "Syncing draft..." : ""}
-                </div>
+                <div className="text-sm text-gray-400 mr-auto"></div>
 
-                {/* Save Draft -> save server draft for existing blog or new post */}
-                <button
-                    disabled={isSaving}
-                    onClick={() => handleSave("draft")}
-                    className="bg-gray-700 text-white px-4 py-2 rounded"
-                >
+                <button disabled={isSaving} onClick={() => handleSaveDraft()} className="bg-gray-700 text-white px-4 py-2 rounded">
                     {isSaving ? "Saving…" : "Save Draft"}
                 </button>
 
-                {/* Publish -> create or update blog */}
                 <button
                     disabled={isSaving}
-                    onClick={() => handleSave("publish")}
+                    onClick={() => handlePublish(initialBlog && initialBlog.id ? "publish-update" : "publish")}
                     className="bg-green-600 text-white px-4 py-2 rounded"
                 >
                     {isSaving ? "Saving…" : initialBlog ? "Update & Publish" : "Publish"}
