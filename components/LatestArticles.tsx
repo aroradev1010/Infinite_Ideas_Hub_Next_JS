@@ -1,5 +1,5 @@
 // components/LatestArticles.tsx
-import { getAllBlogs } from "@/lib/blogService";
+import { getAllBlogs } from "@/lib/blogService.server";
 import BlogCard from "./BlogCard";
 
 export default async function LatestArticles() {

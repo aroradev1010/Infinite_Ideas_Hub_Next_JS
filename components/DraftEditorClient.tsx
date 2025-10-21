@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const BlogEditor = dynamic(() => import("./BlogEditor"), { ssr: false });
+const BlogEditor = dynamic(() => import("./editor/BlogEditor"), { ssr: false });
 
 type InitialDraft = {
     draftId: string;

@@ -1,4 +1,4 @@
-import { getBlogBySlug, getNextOrOldestBlog } from "@/lib/blogService";
+import { getBlogBySlug, getNextOrOldestBlog } from "@/lib/blogService.server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";

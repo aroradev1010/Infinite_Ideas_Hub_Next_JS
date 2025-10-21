@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { likeBlogBySlug } from "@/lib/blogService"; // adjust path if needed
+import { likeBlogBySlug } from "@/lib/blogService.server"; // adjust path if needed
 
 export async function POST(req: Request) {
   try {

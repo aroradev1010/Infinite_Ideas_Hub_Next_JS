@@ -4,7 +4,7 @@ import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { requireRole } from "@/lib/requireRole";
-import { getAllBlogsForAdmin } from "@/lib/blogService";
+import { getAllBlogsForAdmin } from "@/lib/blogService.server";
 
 // Schema validation for PATCH requests
 const patchSchema = z.object({

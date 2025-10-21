@@ -2,7 +2,7 @@
 
 import StarBackground from "@/components/StarBackground";
 import { getCategoryBySlug } from "@/lib/categoryService";
-import { getBlogsByCategory } from "@/lib/blogService";
+import { getBlogsByCategory } from "@/lib/blogService.server";
 import { notFound } from "next/navigation";
 import BlogCard from "@/components/BlogCard";
 

@@ -1,6 +1,6 @@
 // /app/api/blog/unlike/route.ts
 import { NextResponse } from "next/server";
-import { unlikeBlogBySlug } from "@/lib/blogService";
+import { unlikeBlogBySlug } from "@/lib/blogService.server";
 
 export async function POST(req: Request) {
   const { slug } = await req.json();

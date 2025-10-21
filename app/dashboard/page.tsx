@@ -1,7 +1,7 @@
 // app/dashboard/page.tsx
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
-import { getBlogsByAuthorId } from "@/lib/blogService";
+import { getBlogsByAuthorId } from "@/lib/blogService.server";
 import { requireRole } from "@/lib/requireRole";
 import { getAuthorByUserId } from "@/lib/authorService";
 

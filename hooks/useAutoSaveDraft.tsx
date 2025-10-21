@@ -1,102 +1,134 @@
-// hooks/useAutosaveDraft.tsx
-"use client";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { saveDraft as saveDraftAPI } from "@/lib/draftService";
+// hooks/useAutoSaveDraft.ts
+import { useCallback, useEffect, useRef, useState } from "react";
+import { saveDraft } from "@/lib/draftService";
 
-type Draft = {
+/**
+ * useAutoSaveDraft
+ * - Debounced localStorage autosave
+ * - Best-effort server backup when draftId or blogId present
+ *
+ * Returned API:
+ *  - scheduleAutosave(payload)  // schedule local save + optional server save
+ *  - clearLocalDraft(blogId?)    // remove local autosave (optionally delete server draft)
+ *  - loadLocalDraft()            // parse and return local draft payload
+ *  - currentDraftId              // current draft id (if any)
+ *  - setCurrentDraftId(id)       // set draft id
+ *  - isSyncing                   // boolean while talking to server
+ */
+type AutosavePayload = {
     title?: string;
-    description?: string;
-    image?: string;
     category?: string;
+    image?: string;
     status?: string;
-    updatedAt?: number;
+    description?: string;
     blogId?: string | null;
+    draftId?: string | undefined;
 };
 
-const AUTOSAVE_KEY = "ii_hub_local_draft_v1";
-const DEFAULT_DEBOUNCE = 10000;
+export function useAutoSaveDraft(opts: { autosaveKey?: string; initialBlogId?: string | null } = {}) {
+    const AUTOSAVE_KEY = opts.autosaveKey ?? "ii_hub_local_draft_v1";
+    const AUTOSAVE_DEBOUNCE = 1500;
 
-export function useAutosaveDraft(opts?: { initialBlogId?: string | null; debounceMs?: number }) {
-    const { initialBlogId = null, debounceMs = DEFAULT_DEBOUNCE } = opts || {};
+    const timerRef = useRef<number | null>(null);
+    const serverTimerRef = useRef<number | null>(null);
+    const mountedRef = useRef(true);
+
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
-    const autosaveTimer = useRef<number | null>(null);
-    const serverSyncTimer = useRef<number | null>(null);
 
-    // get local draft
-    const loadLocalDraft = useCallback((): Draft | null => {
-        try {
-            const raw = localStorage.getItem(AUTOSAVE_KEY);
-            if (!raw) return null;
-            return JSON.parse(raw) as Draft;
-        } catch {
-            localStorage.removeItem(AUTOSAVE_KEY);
-            return null;
-        }
-    }, []);
-
-    // store local draft
-    const saveLocalDraft = useCallback((draft: Draft) => {
-        try {
-            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...draft, updatedAt: Date.now() }));
-        } catch {
-            /* ignore storage errors */
-        }
-    }, []);
-
-    const clearLocalDraft = useCallback(() => {
-        try { localStorage.removeItem(AUTOSAVE_KEY); } catch { }
-    }, []);
-
-    // debounced autosave (call this from component when state changes)
-    const scheduleAutosave = useCallback((draft: Draft) => {
-        if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
-        autosaveTimer.current = window.setTimeout(() => saveLocalDraft(draft), debounceMs);
-        // if blogId present, sync to server as well (best-effort backup)
-        if (initialBlogId || draft.blogId) {
-            if (serverSyncTimer.current) window.clearTimeout(serverSyncTimer.current);
-            serverSyncTimer.current = window.setTimeout(async () => {
-                if (!navigator.onLine) return;
-                setIsSyncing(true);
-                try {
-                    await saveDraftAPI({ 
-                        ...draft, 
-                        blogId: draft.blogId ?? initialBlogId,
-                        status: draft.status === "draft" || draft.status === "published" ? draft.status : undefined
-                    });
-                } finally {
-                    setIsSyncing(false);
-                }
-            }, debounceMs + 200);
-        }
-    }, [debounceMs, initialBlogId, saveLocalDraft]);
-
-    const saveNowToServer = useCallback(async (draft: Draft) => {
-        try {
-            setIsSyncing(true);
-            const res = await saveDraftAPI({
-                ...draft,
-                status: draft.status === "draft" || draft.status === "published" ? draft.status : undefined
-            });
-            return res;
-        } finally {
-            setIsSyncing(false);
-        }
-    }, []);
-
-    // cleanup timers on unmount
     useEffect(() => {
+        mountedRef.current = true;
         return () => {
-            if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
-            if (serverSyncTimer.current) window.clearTimeout(serverSyncTimer.current);
+            mountedRef.current = false;
+            if (timerRef.current) clearTimeout(timerRef.current);
+            if (serverTimerRef.current) clearTimeout(serverTimerRef.current);
         };
     }, []);
 
+    // load local draft from storage
+    const loadLocalDraft = useCallback(() => {
+        try {
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            // if draftId persisted locally, keep it
+            if (parsed?.draftId) setCurrentDraftId(parsed.draftId);
+            return parsed;
+        } catch {
+            return null;
+        }
+    }, [AUTOSAVE_KEY]);
+
+    // clear local draft (and optionally return)
+    const clearLocalDraft = useCallback(
+        async (blogId?: string | null) => {
+            try {
+                localStorage.removeItem(AUTOSAVE_KEY);
+            } catch { }
+            // note: we do not attempt server delete here; caller can call deleteDraftAPI if desired
+            setCurrentDraftId(null);
+        },
+        [AUTOSAVE_KEY]
+    );
+
+    // schedule local + server autosave
+    const scheduleAutosave = useCallback(
+        (payload: AutosavePayload) => {
+            if (!mountedRef.current) return;
+
+            // debounce local save
+            if (timerRef.current) window.clearTimeout(timerRef.current);
+            timerRef.current = window.setTimeout(() => {
+                try {
+                    const toStore = { ...payload, updatedAt: Date.now(), draftId: payload.draftId ?? currentDraftId ?? null };
+                    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(toStore));
+                } catch { /* ignore */ }
+            }, AUTOSAVE_DEBOUNCE);
+
+            // server backup: if we have a blogId (editing existing blog) or existing draftId, sync to server
+            const shouldServerSync = Boolean(payload.blogId) || Boolean(payload.draftId) || Boolean(currentDraftId);
+            if (!shouldServerSync) return;
+
+            if (serverTimerRef.current) window.clearTimeout(serverTimerRef.current);
+            serverTimerRef.current = window.setTimeout(async () => {
+                setIsSyncing(true);
+                try {
+                    // call saveDraft API; uses draftId if provided to update
+                    const resp = await saveDraft({
+                        draftId: payload.draftId ?? currentDraftId ?? undefined,
+                        title: payload.title ?? "",
+                        description: payload.description ?? "",
+                        image: payload.image ?? "",
+                        category: payload.category ?? "",
+                        status: (payload.status as any) ?? "draft",
+                        blogId: payload.blogId ?? null,
+                    });
+                    if (resp?.ok && resp.draft?.id) {
+                        setCurrentDraftId(resp.draft.id);
+                        // persist returned draftId in local storage so future autosaves update same draft
+                        try {
+                            const raw = localStorage.getItem(AUTOSAVE_KEY);
+                            const parsed = raw ? JSON.parse(raw) : {};
+                            parsed.draftId = resp.draft.id;
+                            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(parsed));
+                        } catch { }
+                    }
+                } catch (err) {
+                    // ignore network autosave failures
+                } finally {
+                    if (mountedRef.current) setIsSyncing(false);
+                }
+            }, AUTOSAVE_DEBOUNCE + 200);
+        },
+        [AUTOSAVE_KEY, AUTOSAVE_DEBOUNCE, currentDraftId]
+    );
+
     return {
-        loadLocalDraft,
-        saveLocalDraft,
-        clearLocalDraft,
         scheduleAutosave,
-        saveNowToServer,
+        clearLocalDraft,
+        loadLocalDraft,
+        currentDraftId,
+        setCurrentDraftId,
         isSyncing,
     };
 }
