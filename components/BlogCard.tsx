@@ -21,21 +21,21 @@ export default function BlogCard({
       <Link href={`/blog/${blog.slug}`} key={blog.id}>
         <div className="hidden xl:flex justify-center">
           <Image
-            src={blog.image.trimEnd() || "/fallback.avif"}
+            src={blog.image!.trimEnd() || "/fallback.avif"}
             alt={blog.title}
             width={180}
             height={180}
             className={
-              `rounded-full object-cover w-[180px] h-[180px]` +
+              `rounded-full object-cover w-45 h-45` +
               ` ${classNameDesktopImage}`
             }
           />
         </div>
 
         {/* Mobile/Tablet Image (banner) */}
-        <div className="w-full h-[200px] md:h-[400px] relative xl:hidden">
+        <div className="w-full h-50 md:h-100 relative xl:hidden">
           <Image
-            src={blog.image.trimEnd() || "/fallback.avif"}
+            src={blog.image!.trimEnd() || "/fallback.avif"}
             alt={blog.title}
             fill
             className="rounded-2xl object-cover"
@@ -74,7 +74,7 @@ export default function BlogCard({
             ></div>
           </div>
         </Link>
-        <Link href={`/categories/${slugify(blog.category)}`}>
+        <Link href={`/categories/${slugify(blog.category || "uncategorized")}`}>
           <SecondaryButton>{blog.category}</SecondaryButton>
         </Link>
       </div>
