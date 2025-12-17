@@ -14,7 +14,7 @@ import type { DraftInput } from "@/types/draftType";
 const BlogEditor = dynamic(() => import("./editor/BlogEditor"), { ssr: false });
 
 
-export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Blog | null }) {
+export default function CreateEditBlogClient({ initialBlog }: { initialBlog?: Partial<Blog> | null }) {
     const router = useRouter();
 
     // --- Form state ---

@@ -5,9 +5,11 @@ import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import DraftEditorClient from "@/components/DraftEditorClient";
 
-interface Props {
-    params: { draftId: string };
-}
+type Props = {
+    params: Promise<{
+        draftId: string;
+    }>;
+};
 
 export default async function EditDraftPage({ params }: Props) {
     const session = await requireRole(["author", "admin"]);

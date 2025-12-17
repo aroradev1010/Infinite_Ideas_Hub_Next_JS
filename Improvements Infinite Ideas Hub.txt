@@ -1,7 +1,0 @@
-Improvements Infinite Ideas Hub
-
-Add adminIp or adminAgent to meta (possible from request headers) for enhanced traceability.
-Add a small UI page at /admin/audit-logs to browse logs with filtering and search (requires pagination).
-Add retention policy: TTL index on createdAt if you want to auto-delete old logs:
-db.audit_logs.createIndex({ createdAt: 1 }, { expireAfterSeconds: 60*60*24*365 }) // 1 year
-Add role-change and other audit events (delete author, change slug, delete post, etc.) by calling logAudit where relevant.

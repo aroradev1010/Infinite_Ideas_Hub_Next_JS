@@ -5,7 +5,13 @@ import { ObjectId } from "mongodb";
 import CreateEditBlogClient from "@/components/CreateEditBlogClient";
 import { notFound, redirect } from "next/navigation";
 
-export default async function EditBlogPage({ params }: { params: { id: string } }) {
+type Props = {
+    params: Promise<{
+        id: string;
+    }>;
+};
+
+export default async function EditBlogPage({ params }: Props) {
     const session = await requireRole(["author", "admin"]); // returns session
     const userId = session.user?.id;
 

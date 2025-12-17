@@ -63,11 +63,11 @@ export default async function BlogPage({ params }: Props) {
         )}
       </h1>
       <Image
-        src={blog.image.trimEnd() || "/fallback.avif"}
+        src={blog.image!.trimEnd() || "/fallback.avif"}
         alt={blog.title}
         width={800}
         height={800}
-        className="rounded-xl object-cover w-full h-[500px] mb-8"
+        className="rounded-xl object-cover w-full h-125 mb-8"
       />
 
       <div className="relative">
@@ -80,7 +80,7 @@ export default async function BlogPage({ params }: Props) {
         ></div>
 
         {!session && (
-          <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-background to-transparent flex items-end justify-center pointer-events-none">
+          <div className="absolute bottom-0 left-0 right-0 h-56 bg-linear-to-t from-background to-transparent flex items-end justify-center pointer-events-none">
             <div className="pointer-events-auto mb-4">
               <Link href="/auth/sign-in">
                 <PrimaryButton
@@ -102,9 +102,9 @@ export default async function BlogPage({ params }: Props) {
           </h1>
           <Link
             href={`/blog/${nextBlog.slug}`}
-            className="flex items-start gap-8 flex-col md:flex-row rounded-xl p-5 border-1"
+            className="flex items-start gap-8 flex-col md:flex-row rounded-xl p-5 border"
           >
-            <div className="w-[150px] h-[100px] relative flex-shrink-0">
+            <div className="w-37.5 h-25 relative shrink-0">
               <Image
                 src={nextBlog.image || "/fallback.jpg"}
                 alt={nextBlog.title}

@@ -22,7 +22,7 @@ export default async function CategoryDetailPage({
       {/* ─── Category Header ───────────────────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground
-          imageSrc={category.categoryImage}
+          imageSrc={category.categoryImage || ""}
           text={category.name}
           imageClassName="rounded-full h-[100px] w-[100px] mb-2"
         />

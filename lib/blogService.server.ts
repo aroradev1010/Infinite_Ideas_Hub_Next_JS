@@ -413,7 +413,7 @@ export async function updateBlog(
       }
 
       // Important: caller (e.g., draft publish flow) should remove blogId link from the draft.
-      return { ok: true, data: created, status: 201 };
+      return { ok: true, data: transformBlog(created), status: 201 };
     }
 
     // Optional ownership enforcement:
