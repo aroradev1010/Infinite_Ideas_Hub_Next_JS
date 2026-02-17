@@ -1,10 +1,10 @@
 // app/dashboard/create/page.tsx
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 import CreateEditBlogClient from "@/components/CreateEditBlogClient";
 
 export default async function CreateBlogPage() {
     // Only authors and admins
-    await requireRole(["author", "admin"]);
+    await requireRolePage(["author", "admin"]);
 
     return (
         <section className="py-10">

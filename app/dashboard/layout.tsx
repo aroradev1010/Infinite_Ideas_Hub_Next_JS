@@ -1,23 +1,13 @@
 // app/dashboard/layout.tsx
 import { ReactNode } from "react";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-    // Fetch session
-    const session = await getServerSession(authOptions);
-
-    // Check authentication
-    if (!session) {
-        redirect("/auth/sign-in");
-    }
-
-    // Check role
-    await requireRole(["admin", "author"]);
+    // FIX: use requireRolePage (uses redirect()) instead of requireRole (throws NextResponse)
+    // This also removes the duplicate getServerSession call that was here before.
+    const session = await requireRolePage(["admin", "author"]);
 
     return (
         <div className="min-h-screen flex bg-black text-white">
@@ -28,25 +18,19 @@ export default async function DashboardLayout({ children }: { children: ReactNod
                     <nav className="space-y-4">
                         <Link
                             href="/dashboard"
-                            className={cn(
-                                "block hover:text-green-400 transition-colors duration-200"
-                            )}
+                            className={cn("block hover:text-green-400 transition-colors duration-200")}
                         >
                             📝 My Blogs
                         </Link>
                         <Link
                             href="/dashboard/drafts"
-                            className={cn(
-                                "block hover:text-green-400 transition-colors duration-200"
-                            )}
+                            className={cn("block hover:text-green-400 transition-colors duration-200")}
                         >
-                            📝 My Drafts
+                            📄 My Drafts
                         </Link>
                         <Link
                             href="/dashboard/create"
-                            className={cn(
-                                "block hover:text-green-400 transition-colors duration-200"
-                            )}
+                            className={cn("block hover:text-green-400 transition-colors duration-200")}
                         >
                             ➕ Create Blog
                         </Link>

@@ -2,12 +2,12 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getBlogsByAuthorId } from "@/lib/blogService.server";
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 import { getAuthorByUserId } from "@/lib/authorService";
 import DashboardBlogsTable from "@/components/dashboard/DashboardBlogsTable";
 
 export default async function DashboardPage() {
-    const session = await requireRole(["author", "admin"]);
+    const session = await requireRolePage(["author", "admin"]);
     const userId = session.user.id as string;
     const author = await getAuthorByUserId(userId);
 

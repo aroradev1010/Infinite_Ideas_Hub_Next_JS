@@ -1,5 +1,5 @@
 // app/dashboard/edit/[id]/page.tsx
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import CreateEditBlogClient from "@/components/CreateEditBlogClient";
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default async function EditBlogPage({ params }: Props) {
-    const session = await requireRole(["author", "admin"]); // returns session
+    const session = await requireRolePage(["author", "admin"]); // returns session
     const userId = session.user?.id;
 
     const { id } = await params;

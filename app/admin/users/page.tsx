@@ -1,11 +1,11 @@
 // app/admin/users/page.tsx
 import { getAllUsersForAdmin } from "@/lib/userService";
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 import AdminUsersTable from "@/components/admin/AdminUsersTable";
 
 
 export default async function AdminUsersPage() {
-    await requireRole(["admin"]);
+    await requireRolePage(["admin"]);
 
     const users = await getAllUsersForAdmin();
 

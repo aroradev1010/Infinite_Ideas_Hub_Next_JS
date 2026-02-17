@@ -1,7 +1,7 @@
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 
 export default async function AdminPage() {
-    await requireRole(["admin"]);
+    await requireRolePage(["admin"]);
 
     return (
         <section>

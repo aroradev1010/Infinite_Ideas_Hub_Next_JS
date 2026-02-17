@@ -1,12 +1,12 @@
 // app/dashboard/drafts/page.tsx
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import DraftsList from "@/components/DraftList";
 
 export default async function DashboardDraftsPage() {
     // ensure the user is an author/admin (returns session)
-    await requireRole(["author", "admin"]);
+    await requireRolePage(["author", "admin"]);
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
@@ -15,7 +15,7 @@ export default async function DashboardDraftsPage() {
     // requireRole already returned the session, but to avoid a second call we keep requireRole above
     // (if you want session.user.id here, call requireRole and capture session)
     // Simpler: call getServerSession or requireRole again to get user id:
-    const session = await requireRole(["author", "admin"]);
+    const session = await requireRolePage(["author", "admin"]);
     const userId = session.user?.id;
 
     const drafts = await db

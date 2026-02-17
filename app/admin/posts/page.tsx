@@ -1,10 +1,10 @@
 // app/admin/posts/page.tsx
 import clientPromise from "@/lib/mongodb";
 import AdminPostsTable from "@/components/admin/AdminPostsTable";
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 
 export default async function AdminPostsPage() {
-    await requireRole(["admin"]);
+    await requireRolePage(["admin"]);
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
@@ -38,4 +38,3 @@ export default async function AdminPostsPage() {
         </section>
     );
 }
-

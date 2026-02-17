@@ -2,10 +2,10 @@
 
 import AdminAuthorsTable from "@/components/admin/AdminAuthorstable";
 import { getAllAuthorsForAdmin } from "@/lib/authorService";
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 
 export default async function AdminAuthorsPage() {
-    await requireRole(["admin"]);
+    await requireRolePage(["admin"]);
     const authors = await getAllAuthorsForAdmin()
    
 

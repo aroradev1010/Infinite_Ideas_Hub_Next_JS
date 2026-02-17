@@ -1,6 +1,6 @@
 // app/dashboard/drafts/[draftId]/page.tsx
 import { notFound } from "next/navigation";
-import { requireRole } from "@/lib/requireRole";
+import { requireRolePage } from "@/lib/requireRole";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import DraftEditorClient from "@/components/DraftEditorClient";
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default async function EditDraftPage({ params }: Props) {
-    const session = await requireRole(["author", "admin"]);
+    const session = await requireRolePage(["author", "admin"]);
     const userId = session.user?.id;
     const { draftId } = await params;
 
