@@ -192,3 +192,34 @@ export async function PATCH(req: Request) {
     return makeJsonResponse({ ok: false, error: "Internal Server Error" }, 500);
   }
 }
+
+/* ------------------ DELETE: remove blog (owner or admin only) ------------------ */
+export async function DELETE(req: Request) {
+  try {
+    const session = await requireRole(["author", "admin"]);
+    const authorUserId = session.user.id;
+    const isAdmin = session.user?.role === "admin";
+
+    const url = new URL(req.url);
+    const id = url.searchParams.get("id");
+    if (!id || !ObjectId.isValid(id)) {
+      return makeJsonResponse({ ok: false, error: "Invalid id" }, 400);
+    }
+
+    const { deleteBlog } = await import("@/lib/blogService.server");
+    const resp = await deleteBlog(id, isAdmin ? undefined : authorUserId);
+
+    if (!resp.ok) {
+      return makeJsonResponse(
+        { ok: false, error: resp.error ?? "Failed to delete blog" },
+        resp.status ?? 400
+      );
+    }
+
+    return makeJsonResponse({ ok: true }, 200);
+  } catch (err: any) {
+    if (err instanceof Response) return err;
+    console.error("DELETE /api/blog error:", err);
+    return makeJsonResponse({ ok: false, error: "Internal Server Error" }, 500);
+  }
+}

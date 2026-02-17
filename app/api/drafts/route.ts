@@ -12,14 +12,15 @@ import { requireRole } from "@/lib/requireRole";
  */
 
 // POST validation (create new draft or upsert by blogId)
+// FIX: image uses z.string() instead of z.string().url() so that
+// relative paths (e.g. "/fallback.avif") and empty strings are accepted.
 const postSchema = z.object({
   title: z.string().min(0).optional(),
   description: z.string().min(0).optional(),
-  image: z.string().url().or(z.literal("")).optional(),
+  image: z.string().optional(),
   category: z.string().optional(),
   status: z.enum(["published", "draft"]).optional(),
   blogId: z.string().optional().nullable(),
-  // keep draftId out of POST body for clarity (we prefer PATCH for updates)
 });
 
 // PATCH validation (update specific draft)
@@ -27,7 +28,7 @@ const patchSchema = z.object({
   draftId: z.string().min(1),
   title: z.string().min(0).optional(),
   description: z.string().min(0).optional(),
-  image: z.string().url().or(z.literal("")).optional(),
+  image: z.string().optional(),
   category: z.string().optional(),
   status: z.enum(["published", "draft"]).optional(),
   blogId: z.string().optional().nullable(),
@@ -271,7 +272,8 @@ export async function GET(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    await requireRole(["author", "admin"]);
+    // FIX: was calling requireRole twice — now called once and session reused
+    const session = await requireRole(["author", "admin"]);
     const url = new URL(req.url);
     const query = Object.fromEntries(url.searchParams.entries());
     const parsed = deleteQuerySchema.safeParse(query);
@@ -280,7 +282,6 @@ export async function DELETE(req: Request) {
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
-    const session = await requireRole(["author", "admin"]);
     const userIdStr = session.user?.id;
     if (!userIdStr)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

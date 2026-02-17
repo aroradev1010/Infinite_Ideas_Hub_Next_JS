@@ -89,3 +89,21 @@ export async function updateBlog(
     return { ok: false, error: err?.message || "Network error" };
   }
 }
+
+/* ------------------------------------------------------
+   DELETE blog
+   ------------------------------------------------------ */
+export async function deleteBlog(blogId: string): Promise<ApiResponse<null>> {
+  try {
+    const res = await fetch(`/api/blog?id=${encodeURIComponent(blogId)}`, {
+      method: "DELETE",
+    });
+    const parsed = (await safeJson(res)) as { ok?: boolean; error?: string };
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: parsed?.error || "Failed to delete blog" };
+    }
+    return { ok: true, status: res.status, data: null };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Network error" };
+  }
+}

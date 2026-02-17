@@ -27,13 +27,34 @@ export default function AdminUsersTable({ initialUsers }: { initialUsers: UserRo
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || "Promotion failed");
-
             setUsers((prev) =>
                 prev.map((u) => (u.id === userId ? { ...u, role: "author" } : u))
             );
-            toast.success(`✅ ${data.author?.name || "User"} promoted to Author`);
+            toast.success(`${data.author?.name || "User"} promoted to Author`);
         } catch (err: any) {
             toast.error(err.message || "Failed to promote user.");
+        } finally {
+            setLoading(null);
+        }
+    }, []);
+
+    const deleteUser = useCallback(async (userId: string, userName: string) => {
+        // Simple inline confirm — replace with a Dialog if you want fancier UX
+        if (!window.confirm(`Delete user "${userName}"? This cannot be undone.`)) return;
+
+        setLoading(userId);
+        try {
+            const res = await fetch(`/api/admin/users?id=${encodeURIComponent(userId)}`, {
+                method: "DELETE",
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Delete failed");
+
+            // Remove from local state immediately
+            setUsers((prev) => prev.filter((u) => u.id !== userId));
+            toast.success(`User "${userName}" deleted.`);
+        } catch (err: any) {
+            toast.error(err.message || "Failed to delete user.");
         } finally {
             setLoading(null);
         }
@@ -47,9 +68,7 @@ export default function AdminUsersTable({ initialUsers }: { initialUsers: UserRo
                     ? "bg-green-700 text-green-100"
                     : "bg-gray-700 text-gray-100";
         return (
-            <span
-                className={`px-2 py-1 rounded text-xs font-medium uppercase ${colors}`}
-            >
+            <span className={`px-2 py-1 rounded text-xs font-medium uppercase ${colors}`}>
                 {role}
             </span>
         );
@@ -85,23 +104,43 @@ export default function AdminUsersTable({ initialUsers }: { initialUsers: UserRo
                             <td className="p-3">
                                 {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}
                             </td>
-                            <td className="p-3 space-x-2">
-                                {u.role === "user" ? (
-                                    <button
-                                        onClick={() => promoteUser(u.id)}
-                                        disabled={loading === u.id}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                                    >
-                                        {loading === u.id ? "Promoting..." : "Promote to Author"}
-                                    </button>
-                                ) : (
-                                    <span className="text-gray-400 italic">No actions</span>
-                                )}
+                            <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                    {/* Promote button — only for plain users */}
+                                    {u.role === "user" && (
+                                        <button
+                                            onClick={() => promoteUser(u.id)}
+                                            disabled={loading === u.id}
+                                            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1 rounded text-sm"
+                                        >
+                                            {loading === u.id ? "Working…" : "Promote"}
+                                        </button>
+                                    )}
+
+                                    {/* Delete button — not shown for admins (protect against self-delete) */}
+                                    {u.role !== "admin" && (
+                                        <button
+                                            onClick={() => deleteUser(u.id, u.name || u.email)}
+                                            disabled={loading === u.id}
+                                            className="bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white px-3 py-1 rounded text-sm"
+                                        >
+                                            {loading === u.id ? "Working…" : "Delete"}
+                                        </button>
+                                    )}
+
+                                    {u.role === "admin" && (
+                                        <span className="text-gray-500 italic text-sm">Protected</span>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
+
+            {users.length === 0 && (
+                <p className="text-center py-8 text-gray-500">No users found.</p>
+            )}
         </div>
     );
 }

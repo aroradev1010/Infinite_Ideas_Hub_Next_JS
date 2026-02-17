@@ -498,3 +498,53 @@ export async function updateBlog(
     return { ok: false, error: "Internal Server Error", status: 500 };
   }
 }
+
+/* -----------------------
+   DELETE blog (server-side)
+   - If authorUserId provided: enforces ownership (authors can only delete their own)
+   - If authorUserId omitted: admin bypass, no ownership check
+   ----------------------- */
+export async function deleteBlog(
+  blogId: string,
+  authorUserId?: string
+): Promise<ApiResponse<null>> {
+  if (!ObjectId.isValid(blogId)) {
+    return { ok: false, error: "Invalid blog id", status: 400 };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+
+    const existing = await db
+      .collection("blogs")
+      .findOne({ _id: new ObjectId(blogId) });
+
+    if (!existing) {
+      return { ok: false, error: "Blog not found", status: 404 };
+    }
+
+    // Ownership check (skip for admin)
+    if (authorUserId) {
+      const authorDoc = await db
+        .collection<AuthorDoc>("authors")
+        .findOne({ userId: new ObjectId(authorUserId) });
+
+      if (!authorDoc) {
+        return { ok: false, error: "Author not found", status: 404 };
+      }
+
+      const existingAuthorId = existing.authorId?.toString?.() ?? "";
+      if (existingAuthorId !== authorDoc._id.toString()) {
+        return { ok: false, error: "Forbidden: not the owner", status: 403 };
+      }
+    }
+
+    await db.collection("blogs").deleteOne({ _id: new ObjectId(blogId) });
+
+    return { ok: true, data: null, status: 200 };
+  } catch (err: any) {
+    console.error("deleteBlog error:", err);
+    return { ok: false, error: "Internal Server Error", status: 500 };
+  }
+}

@@ -46,7 +46,7 @@ export const editorTheme: EditorThemeClasses = {
   hashtag: "text-blue-600 bg-blue-100 rounded-md px-1",
   text: {
     bold: "font-bold",
-    code: "bg-gray-100 p-1 rounded-md",
+    code: "bg-gray-800 text-gray-200 p-1 rounded-md font-mono text-sm",
     italic: "italic",
     strikethrough: "line-through",
     subscript: "sub",
