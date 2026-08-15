@@ -10,7 +10,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
   CircleUserRound,
-  FilePenLine,
   FileText,
   FolderTree,
   LayoutDashboard,
@@ -34,14 +33,15 @@ type MenuItem = {
 };
 
 const authorItems: MenuItem[] = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "My Posts" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard/posts", icon: FileText, label: "Posts" },
   { href: "/dashboard/create", icon: NotebookPen, label: "Create Post" },
-  { href: "/dashboard/drafts", icon: FilePenLine, label: "My Drafts" },
 ];
 
 const adminItems: MenuItem[] = [
   { href: "/admin", icon: ShieldCheck, label: "Admin Dashboard" },
-  { href: "/dashboard", icon: LayoutDashboard, label: "My Posts" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Author Dashboard" },
+  { href: "/dashboard/posts", icon: FileText, label: "My Posts" },
   { href: "/dashboard/create", icon: NotebookPen, label: "Create Post" },
   { href: "/admin/posts", icon: FileText, label: "Manage Posts" },
   { href: "/admin/authors", icon: CircleUserRound, label: "Manage Authors" },

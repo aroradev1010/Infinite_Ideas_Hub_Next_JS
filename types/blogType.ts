@@ -63,6 +63,17 @@ export interface DraftSummary {
   updatedAt: string
 }
 
+export interface DashboardPostSummary {
+  id: string
+  title: string
+  category: string
+  status: BlogStatus
+  likes: number
+  createdAt: string
+  updatedAt: string
+  slug: string | null
+}
+
 export interface AdminPostSummary {
   id: string
   title: string

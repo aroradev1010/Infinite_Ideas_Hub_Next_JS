@@ -1,57 +1,165 @@
-// app/dashboard/page.tsx
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { getBlogsByAuthorId } from "@/lib/blogService.server";
-import { requireRolePage } from "@/lib/requireRole";
-import { getAuthorByUserId } from "@/lib/authorService";
-import DashboardBlogsTable from "@/components/dashboard/DashboardBlogsTable";
+import Link from "next/link"
+import {
+  ArrowRight,
+  CheckCircle2,
+  FilePenLine,
+  FileText,
+  Plus,
+} from "lucide-react"
+
+import DashboardBlogsTable from "@/components/dashboard/DashboardBlogsTable"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { getAuthorByUserId } from "@/lib/authorService"
+import { getDashboardPostsByAuthorId } from "@/lib/blogService.server"
+import { requireRolePage } from "@/lib/requireRole"
+import PrimaryButton from "@/components/PrimaryButton"
+
+const summaryCards = [
+  {
+    key: "total" as const,
+    label: "Total Posts",
+    icon: FileText,
+    iconClassName: "border-cyan-400/20 bg-cyan-400/[0.08] text-cyan-300",
+  },
+  {
+    key: "published" as const,
+    label: "Published",
+    icon: CheckCircle2,
+    iconClassName:
+      "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
+  },
+  {
+    key: "drafts" as const,
+    label: "Drafts",
+    icon: FilePenLine,
+    iconClassName: "border-amber-300/15 bg-amber-300/[0.07] text-amber-200",
+  },
+]
 
 export default async function DashboardPage() {
-    const session = await requireRolePage(["author", "admin"]);
-    const userId = session.user.id as string;
-    const author = await getAuthorByUserId(userId);
+  const session = await requireRolePage(["author", "admin"])
+  const author = await getAuthorByUserId(session.user.id)
 
-    if (!author) {
-        return (
-            <section className="space-y-6">
-                <header className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold">My Blogs</h1>
-                </header>
-                <p className="text-gray-400 mt-10 text-lg">
-                    You are not an author yet. Ask an admin to promote you or create an author profile.
-                </p>
-            </section>
-        );
-    }
-
-    const blogs = await getBlogsByAuthorId(author.id);
-
-    // Serialise only the fields the table needs (keeps the RSC → Client boundary clean)
-    const rows = blogs.map((b) => ({
-        id: b.id,
-        title: b.title,
-        category: b.category ?? "",
-        status: b.status,
-        likes: b.likes,
-        createdAt: b.createdAt,
-        slug: b.slug,
-    }));
-
+  if (!author) {
     return (
-        <section className="space-y-6">
-            <header className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold">My Blogs</h1>
-                <Link
-                    href="/dashboard/create"
-                    className={cn(
-                        "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
-                    )}
-                >
-                    + New Blog
-                </Link>
-            </header>
+      <section>
+        <header>
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-400">
+            Overview
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-sm text-gray-500 sm:text-base">
+            Plan, write, and manage your ideas in one place.
+          </p>
+        </header>
 
-            <DashboardBlogsTable initialBlogs={rows} />
-        </section>
-    );
+        <Card className="mt-8 max-w-2xl border-dashed border-white/10 bg-card/20 shadow-none">
+          <CardContent className="p-8">
+            <h2 className="text-lg font-extrabold text-white">
+              Author profile required
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
+              Your account has dashboard access, but it is not connected to an
+              author profile yet. Ask an administrator to create or connect one.
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+    )
+  }
+
+  const posts = await getDashboardPostsByAuthorId(author.id)
+  const counts = {
+    total: posts.length,
+    published: posts.filter((post) => post.status === "published").length,
+    drafts: posts.filter((post) => post.status === "draft").length,
+  }
+  const recentPosts = posts.slice(0, 5)
+
+  return (
+    <section className="space-y-9">
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-400">
+            Overview
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-sm text-gray-500 sm:text-base">
+            Pick up where you left off and keep your publishing moving.
+          </p>
+        </div>
+        <Link href="/dashboard/create">
+          <PrimaryButton
+            text="+ New Blog"
+            className="w-fullfont-extrabold text-slate-950 shadow-lg sm:w-auto"
+          />
+
+        </Link>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {summaryCards.map((card) => {
+          const Icon = card.icon
+
+          return (
+            <Card
+              key={card.key}
+              className="border-white/[0.08] bg-card/20 shadow-none"
+            >
+              <CardContent className="flex items-center justify-between p-5 sm:p-6">
+                <div>
+                  <p className="text-sm font-bold text-gray-500">{card.label}</p>
+                  <p className="mt-2 text-3xl font-black tracking-tight text-white">
+                    {counts[card.key]}
+                  </p>
+                </div>
+                <span
+                  className={`flex size-11 items-center justify-center rounded-xl border ${card.iconClassName}`}
+                >
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      <section aria-labelledby="recent-posts-heading">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <h2
+              id="recent-posts-heading"
+              className="text-xl font-black tracking-tight text-white sm:text-2xl"
+            >
+              Recent Posts
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Your five most recently updated posts.
+            </p>
+          </div>
+          <Button
+            asChild
+            variant="ghost"
+            className="shrink-0 text-gray-400 hover:bg-white/[0.05] hover:text-cyan-300"
+          >
+            <Link href="/dashboard/posts">
+              View all
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+
+        <DashboardBlogsTable
+          key={recentPosts.map((post) => post.id).join("-")}
+          initialPosts={recentPosts}
+          variant="recent"
+        />
+      </section>
+    </section>
+  )
 }

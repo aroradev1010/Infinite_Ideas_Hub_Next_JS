@@ -50,7 +50,7 @@ export const Navbar = () => {
   }, [session?.user?.email]);
 
   return (
-    <div className={`max-w-7xl mx-auto ${isMenuOpen ? "" : ""}`}>
+    <header className={`max-w-7xl mx-auto ${isMenuOpen ? "" : ""}`}>
       <div className="flex items-center justify-between py-4 px-4 relative">
         <Link
           href="/"
@@ -179,7 +179,7 @@ export const Navbar = () => {
           </ul>
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

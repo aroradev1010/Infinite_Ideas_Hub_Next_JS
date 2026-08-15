@@ -14,6 +14,7 @@ import type {
   AdminPostSummary,
   BlogInput,
   BlogStatus,
+  DashboardPostSummary,
   DraftSummary,
   EditableBlog,
   PublicBlog,
@@ -640,6 +641,35 @@ export async function getDraftsForUser(
     })
   } catch (error) {
     console.error("Failed to fetch drafts:", error)
+    return []
+  }
+}
+
+export async function getDashboardPostsByAuthorId(
+  authorId: string
+): Promise<DashboardPostSummary[]> {
+  if (!ObjectId.isValid(authorId)) return []
+
+  try {
+    const db = await getDatabase()
+    const docs = await collection(db)
+      .find({ authorId: new ObjectId(authorId) })
+      .project({ editorState: 0, contentHtml: 0 })
+      .sort({ updatedAt: -1 })
+      .toArray()
+
+    return docs.map((doc) => ({
+      id: doc._id.toString(),
+      title: doc.title || "Untitled post",
+      category: doc.category ?? "",
+      status: doc.status,
+      likes: doc.likes ?? 0,
+      createdAt: new Date(doc.createdAt).toISOString(),
+      updatedAt: new Date(doc.updatedAt).toISOString(),
+      slug: doc.slug ?? null,
+    }))
+  } catch (error) {
+    console.error("Failed to fetch dashboard posts:", error)
     return []
   }
 }
