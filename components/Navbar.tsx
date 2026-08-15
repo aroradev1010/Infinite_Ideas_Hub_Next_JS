@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import PrimaryButton from "./PrimaryButton";
-import { LogOut, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import SecondaryButton from "./SecondaryButton";
-import { Button } from "./ui/button";
+import { UserMenu } from "./UserMenu";
 
 const navLinks = [
   { id: 1, name: "Home", link: "/" },
@@ -21,7 +21,7 @@ export const Navbar = () => {
   const { data: session } = useSession();
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    setIsMenuOpen((isOpen) => !isOpen);
   };
 
   useEffect(() => {
@@ -47,7 +47,6 @@ export const Navbar = () => {
       }
     };
     checkSubscriber();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.email]);
 
   return (
@@ -72,20 +71,21 @@ export const Navbar = () => {
         </ul>
 
         <div className="flex gap-3 items-center">
-          <div className="flex gap-5">
+          <div className="flex items-center gap-5">
             {session?.user ? (
               <>
-                <Button
-                  className="uppercase md:text-sm font-extrabold  tracking-wider hidden sm:flex w-[90px] text-red-600 cursor-pointer bg-transparent hover:bg-transparent hover:opacity-85 pt-4"
-                  onClick={() => signOut()}
-                >
-                  <LogOut />
-                  LogOut
-                </Button>
-                {!isSubscriber && (<PrimaryButton
-                  className={`uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex `}
-                  text="Subscribe"
-                />)}
+                {!isSubscriber && (
+                  <Link href="/subscribe" className="hidden sm:block">
+                    <PrimaryButton
+                      className="uppercase md:text-sm font-extrabold px-5 tracking-wider"
+                      text="Subscribe"
+                    />
+                  </Link>
+                )}
+                <UserMenu
+                  user={session.user}
+                  onOpen={() => setIsMenuOpen(false)}
+                />
               </>
             ) : (
               <>
@@ -137,9 +137,8 @@ export const Navbar = () => {
 
             {session?.user ? (
               <>
-                <li>
-                  {!isSubscriber && (
-
+                {!isSubscriber && (
+                  <li>
                     <Link
                       href="/subscribe"
                       onClick={toggleMenu}
@@ -152,20 +151,8 @@ export const Navbar = () => {
                     >
                       Subscribe
                     </Link>
-                  )}
-                </li>
-
-                <li>
-                  <button
-                    onClick={() => {
-                      signOut();
-                      toggleMenu();
-                    }}
-                    className="text-left text-2xl font-bold text-red-500 hover:text-red-600 transition"
-                  >
-                    Log Out
-                  </button>
-                </li>
+                  </li>
+                )}
               </>
             ) : (
               <>
