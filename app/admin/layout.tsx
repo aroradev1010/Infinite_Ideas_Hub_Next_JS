@@ -1,14 +1,14 @@
 import type { ReactNode } from "react"
 
 import { DashboardShell } from "@/components/dashboard/DashboardShell"
-import { requireRolePage } from "@/lib/requireRole"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 
 export default async function AdminLayout({
   children,
 }: {
   children: ReactNode
 }) {
-  await requireRolePage(["admin"])
+  await requireRoleOrPreviewPage(["admin"])
 
   return <DashboardShell mode="admin">{children}</DashboardShell>
 }

@@ -28,6 +28,7 @@ import { generateBlogPreview } from "@/lib/blogPreview.client"
 import { createBlog, updateBlog } from "@/lib/blogService.client"
 import { createEmptySerializedEditorState } from "@/lib/editor/state"
 import { cn } from "@/lib/utils"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 import type {
   BlogInput,
   BlogArticleData,
@@ -56,6 +57,7 @@ export default function CreateEditBlogClient({
   presentation = "default",
 }: CreateEditBlogClientProps) {
   const router = useRouter()
+  const { guardMutation } = usePreviewMode()
   const [blogId, setBlogId] = useState(initialBlog?.id ?? null)
   const [title, setTitle] = useState(initialBlog?.title ?? "")
   const [category, setCategory] = useState<BlogCategoryName>(
@@ -117,6 +119,8 @@ export default function CreateEditBlogClient({
   )
 
   const handleSaveDraft = useCallback(async () => {
+    if (guardMutation()) return
+
     const hasContent =
       title.trim().length > 0 ||
       plainTextRef.current.trim().length > 0 ||
@@ -142,9 +146,11 @@ export default function CreateEditBlogClient({
     } finally {
       setIsSaving(false)
     }
-  }, [image, initialBlog?.status, router, save, title])
+  }, [guardMutation, image, initialBlog?.status, router, save, title])
 
   const handlePublish = useCallback(async () => {
+    if (guardMutation()) return
+
     if (title.trim().length < 3) {
       toast.error("Please provide a title (min 3 characters).")
       return
@@ -166,7 +172,7 @@ export default function CreateEditBlogClient({
     } finally {
       setIsSaving(false)
     }
-  }, [blogId, router, save, title])
+  }, [blogId, guardMutation, router, save, title])
 
   const handlePreview = useCallback(async () => {
     if (previewRequestInFlightRef.current) return

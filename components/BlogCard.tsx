@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import SecondaryButton from "./SecondaryButton";
+import BlogCardImage from "./BlogCardImage";
 import type { PublicBlog } from "@/types/blogType";
 import { formatDate, slugify } from "@/lib/utils";
 
@@ -35,8 +35,8 @@ export default function BlogCard({
       {/* Desktop Image */}
       <Link href={`/blog/${blog.slug}`}>
         <div className="hidden xl:flex justify-center">
-          <Image
-            src={blog.image?.trimEnd() || "/fallback.avif"}
+          <BlogCardImage
+            src={blog.image}
             alt={blog.title}
             width={180}
             height={180}
@@ -47,12 +47,13 @@ export default function BlogCard({
         </div>
 
         {/* Mobile / Tablet Image */}
-        <div className="relative h-50 w-full md:h-100 xl:hidden">
-          <Image
-            src={blog.image?.trimEnd() || "/fallback.avif"}
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl xl:hidden">
+          <BlogCardImage
+            src={blog.image}
             alt={blog.title}
             fill
-            className="rounded-2xl object-cover"
+            sizes="(max-width: 1279px) 100vw, 1px"
+            className="object-cover"
           />
         </div>
       </Link>

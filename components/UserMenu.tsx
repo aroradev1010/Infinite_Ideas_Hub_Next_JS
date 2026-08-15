@@ -11,10 +11,10 @@ import {
   ChevronDown,
   CircleUserRound,
   FileText,
-  FolderTree,
   LayoutDashboard,
   LogOut,
   NotebookPen,
+  ScanEye,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider";
 
 type MenuItem = {
   href: string;
@@ -48,6 +49,15 @@ const adminItems: MenuItem[] = [
   { href: "/admin/users", icon: Users, label: "Manage Users" },
 ];
 
+const previewItems: MenuItem[] = [
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard/posts", icon: FileText, label: "Posts" },
+  { href: "/dashboard/create", icon: NotebookPen, label: "Create Post" },
+  { href: "/admin", icon: ShieldCheck, label: "Admin Dashboard" },
+  { href: "/admin/posts", icon: FileText, label: "Manage Posts" },
+  { href: "/admin/authors", icon: CircleUserRound, label: "Manage Authors" },
+];
+
 const itemsByRole: Record<string, MenuItem[]> = {
   admin: adminItems,
   author: authorItems,
@@ -55,7 +65,15 @@ const itemsByRole: Record<string, MenuItem[]> = {
 
 interface UserMenuProps {
   onOpen?: () => void;
-  user: Session["user"];
+  previewMode?: boolean;
+  user?: Session["user"];
+}
+
+export function getUserMenuItems(
+  role: string | undefined,
+  previewMode: boolean
+): MenuItem[] {
+  return previewMode ? previewItems : itemsByRole[role ?? ""] ?? [];
 }
 
 function getInitials(name?: string | null) {
@@ -70,19 +88,27 @@ function getInitials(name?: string | null) {
     .toUpperCase();
 }
 
-export function UserMenu({ onOpen, user }: UserMenuProps) {
+export function UserMenu({ onOpen, previewMode = false, user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const items = itemsByRole[user.role] ?? [];
-  const initials = getInitials(user.name);
+  const { exitPreviewMode } = usePreviewMode();
+  const items = getUserMenuItems(user?.role, previewMode);
+  const initials = getInitials(user?.name);
 
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
 
+  if (!previewMode && !user) return null;
+
   const handleLogout = () => {
     setIsOpen(false);
     void signOut();
+  };
+
+  const handleExitPreview = () => {
+    setIsOpen(false);
+    exitPreviewMode();
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -99,7 +125,7 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
           className="group flex items-center gap-1 rounded-full bg-zinc-950/80 p-1 pr-2 text-gray-300 shadow-sm transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
         >
           <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-cyan-400 text-sm font-extrabold text-white">
-            {user.image ? (
+            {user?.image ? (
               <Image
                 src={user.image}
                 alt={user.name ? `${user.name}'s profile` : "Profile"}
@@ -107,6 +133,8 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
                 sizes="36px"
                 className="object-cover"
               />
+            ) : previewMode ? (
+              <ScanEye className="size-5" aria-hidden="true" />
             ) : initials ? (
               initials
             ) : (
@@ -132,7 +160,7 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
         <div className="border-b border-white/10 bg-gradient-to-br from-primary/20 via-zinc-950 to-cyan-400/10 p-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-cyan-400 font-extrabold text-white ring-2 ring-white/10">
-              {user.image ? (
+              {user?.image ? (
                 <Image
                   src={user.image}
                   alt=""
@@ -140,6 +168,8 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
                   sizes="48px"
                   className="object-cover"
                 />
+              ) : previewMode ? (
+                <ScanEye className="size-6" aria-hidden="true" />
               ) : initials ? (
                 initials
               ) : (
@@ -148,14 +178,16 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
             </span>
 
             <div className="min-w-0">
-              {user.name && (
-                <p className="truncate font-extrabold text-white">{user.name}</p>
+              {(user?.name || previewMode) && (
+                <p className="truncate font-extrabold text-white">
+                  {previewMode ? "Platform Preview" : user?.name}
+                </p>
               )}
-              {user.email && (
+              {user?.email && !previewMode && (
                 <p className="truncate text-xs text-gray-400">{user.email}</p>
               )}
               <span className="mt-1 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-cyan-300">
-                {user.role}
+                {previewMode ? "Preview Mode" : user?.role}
               </span>
             </div>
           </div>
@@ -190,14 +222,25 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
         )}
 
         <div className="border-t border-white/10 p-2">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
-          >
-            <LogOut className="size-4" aria-hidden="true" />
-            Log Out
-          </button>
+          {previewMode ? (
+            <button
+              type="button"
+              onClick={handleExitPreview}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-cyan-300 transition-colors hover:bg-cyan-400/10 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+            >
+              <LogOut className="size-4" aria-hidden="true" />
+              Exit Preview
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
+            >
+              <LogOut className="size-4" aria-hidden="true" />
+              Log Out
+            </button>
+          )}
         </div>
       </PopoverContent>
     </Popover>

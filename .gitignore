@@ -13,6 +13,7 @@
 # testing
 /coverage
 /tests
+vitest.config.ts
 vitest.config.mts
 
 # next.js

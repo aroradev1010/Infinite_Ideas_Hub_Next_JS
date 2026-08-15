@@ -24,6 +24,7 @@ import {
 } from "@/components/dashboard/DashboardTable"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,6 +120,7 @@ export default function DashboardBlogsTable({
     useState<DashboardPostSummary | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const router = useRouter()
+  const { guardMutation } = usePreviewMode()
 
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -136,6 +138,10 @@ export default function DashboardBlogsTable({
 
   const handleDelete = async () => {
     if (!pendingDelete) return
+    if (guardMutation()) {
+      setPendingDelete(null)
+      return
+    }
 
     const post = pendingDelete
     setDeletingId(post.id)

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 
 interface DashboardShellProps {
   children: ReactNode
@@ -71,7 +72,10 @@ export function DashboardShell({
   mode = "author",
 }: DashboardShellProps) {
   const pathname = usePathname()
-  const navigation = navigationByMode[mode]
+  const { isPreviewMode } = usePreviewMode()
+  const navigation = navigationByMode[mode].filter(
+    (item) => !(isPreviewMode && item.href === "/admin/users")
+  )
 
   return (
     <div className="-mb-20 min-h-[calc(100dvh-4.75rem)] border-t border-white/[0.06] bg-background text-foreground">

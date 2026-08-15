@@ -1,6 +1,9 @@
 import CreateEditBlogClient from "@/components/CreateEditBlogClient"
-import { getEditableBlogForUser } from "@/lib/blogService.server"
-import { requireRolePage } from "@/lib/requireRole"
+import {
+  getEditableBlogForUser,
+  getShowcaseEditableBlogById,
+} from "@/lib/blogService.server"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 import { notFound } from "next/navigation"
 
 interface EditBlogPageProps {
@@ -8,13 +11,16 @@ interface EditBlogPageProps {
 }
 
 export default async function EditBlogPage({ params }: EditBlogPageProps) {
-  const session = await requireRolePage(["author", "admin"])
+  const access = await requireRoleOrPreviewPage(["author", "admin"])
   const { id } = await params
-  const blog = await getEditableBlogForUser(
-    id,
-    session.user.id,
-    session.user.role === "admin"
-  )
+  const blog =
+    access.kind === "preview"
+      ? await getShowcaseEditableBlogById(id)
+      : await getEditableBlogForUser(
+          id,
+          access.session.user.id,
+          access.session.user.role === "admin"
+        )
 
   if (!blog) notFound()
 

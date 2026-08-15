@@ -1,11 +1,17 @@
 import AdminPostsTable from "@/components/admin/AdminPostsTable"
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
-import { getAllBlogsForAdmin } from "@/lib/blogService.server"
-import { requireRolePage } from "@/lib/requireRole"
+import {
+  getAllBlogsForAdmin,
+  getShowcaseAdminPosts,
+} from "@/lib/blogService.server"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 
 export default async function AdminPostsPage() {
-  await requireRolePage(["admin"])
-  const posts = await getAllBlogsForAdmin()
+  const access = await requireRoleOrPreviewPage(["admin"])
+  const posts =
+    access.kind === "preview"
+      ? await getShowcaseAdminPosts()
+      : await getAllBlogsForAdmin()
 
   return (
     <section>

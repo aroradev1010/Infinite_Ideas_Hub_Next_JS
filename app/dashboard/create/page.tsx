@@ -1,11 +1,14 @@
 import CreateEditBlogClient from "@/components/CreateEditBlogClient"
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
 import { getAuthorByUserId } from "@/lib/authorService"
-import { requireRolePage } from "@/lib/requireRole"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 
 export default async function CreateBlogPage() {
-  const session = await requireRolePage(["author", "admin"])
-  const author = await getAuthorByUserId(session.user.id)
+  const access = await requireRoleOrPreviewPage(["author", "admin"])
+  const author =
+    access.kind === "authenticated"
+      ? await getAuthorByUserId(access.session.user.id)
+      : null
 
   return (
     <section className="mx-auto max-w-6xl space-y-8">
@@ -19,7 +22,12 @@ export default async function CreateBlogPage() {
         initialBlog={null}
         presentation="dashboard-create"
         currentAuthor={{
-          name: author?.name ?? session.user.name ?? "Unknown Author",
+          name:
+            author?.name ??
+            (access.kind === "authenticated"
+              ? access.session.user.name
+              : "Preview Author") ??
+            "Unknown Author",
           slug: author?.slug ?? null,
         }}
       />

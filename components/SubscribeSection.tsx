@@ -9,6 +9,7 @@ import PrimaryButton from "./PrimaryButton";
 import { cn } from "@/lib/utils";
 import { sendSubscriptionEmail } from "@/lib/SubscriptionService";
 import ProfileSubsribeImages from "./ProfileSubsribeImages";
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider";
 
 const EmailSchema = z.string().email();
 
@@ -27,8 +28,11 @@ export default function SubscribeSection({
 }: SubscribeSectionProps) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { guardMutation } = usePreviewMode();
 
   const handleSubscribe = useCallback(async () => {
+    if (guardMutation()) return;
+
     const result = EmailSchema.safeParse(email);
     if (!result.success) {
       toast.error("Please enter a valid email address.");
@@ -50,7 +54,7 @@ export default function SubscribeSection({
     } finally {
       setIsLoading(false);
     }
-  }, [email]);
+  }, [email, guardMutation]);
 
   return (
     <section className={cn("space-y-6", className)}>

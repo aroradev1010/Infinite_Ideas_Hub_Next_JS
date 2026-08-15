@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
+import { requireSession } from "@/lib/requireRole";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get("email");
+    const session = await requireSession();
+    const email = session.user.email;
 
     if (!email) {
       return NextResponse.json({ exists: false });
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ exists: true }); // or false
   } catch (error) {
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error }, { status: 500 });
   }
 }

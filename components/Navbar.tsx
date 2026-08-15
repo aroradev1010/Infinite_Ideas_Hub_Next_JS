@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import SecondaryButton from "./SecondaryButton";
 import { UserMenu } from "./UserMenu";
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider";
 
 const navLinks = [
   { id: 1, name: "Home", link: "/" },
@@ -19,6 +20,7 @@ export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname() || "/";
   const { data: session } = useSession();
+  const { enterPreviewMode, isPreviewMode } = usePreviewMode();
 
   const toggleMenu = () => {
     setIsMenuOpen((isOpen) => !isOpen);
@@ -41,7 +43,7 @@ export const Navbar = () => {
   useEffect(() => {
     const checkSubscriber = async () => {
       if (session?.user?.email) {
-        const res = await fetch(`/api/checkSubscriber?email=${encodeURIComponent(session.user.email)}`);
+        const res = await fetch("/api/checkSubscriber");
         const data = await res.json();
         setIsSubscriber(data.exists);
       }
@@ -87,18 +89,22 @@ export const Navbar = () => {
                   onOpen={() => setIsMenuOpen(false)}
                 />
               </>
+            ) : isPreviewMode ? (
+              <UserMenu
+                previewMode
+                onOpen={() => setIsMenuOpen(false)}
+              />
             ) : (
               <>
+                <PrimaryButton
+                  className="uppercase px-3 text-xs sm:px-4 md:text-sm"
+                  text="explore"
+                  onClick={enterPreviewMode}
+                />
                 <Link href="/auth/sign-in">
                   <PrimaryButton
-                    className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex w-[90px]"
+                    className="uppercase text-xs md:text-sm px-5 tracking-wider hidden sm:flex w-[90px]"
                     text="Sign Up"
-                  />
-                </Link>
-                <Link href="/subscribe">
-                  <PrimaryButton
-                    className="uppercase md:text-sm font-extrabold px-5 tracking-wider hidden sm:flex"
-                    text="Subscribe"
                   />
                 </Link>
               </>
@@ -154,8 +160,30 @@ export const Navbar = () => {
                   </li>
                 )}
               </>
+            ) : isPreviewMode ? (
+              <li>
+                <Link
+                  href="/dashboard"
+                  onClick={toggleMenu}
+                  className="text-2xl font-bold text-cyan-300 transition hover:text-primary"
+                >
+                  Preview Dashboard
+                </Link>
+              </li>
             ) : (
               <>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleMenu();
+                      enterPreviewMode();
+                    }}
+                    className="text-left text-2xl font-bold transition hover:text-primary"
+                  >
+                    Explore
+                  </button>
+                </li>
                 <li>
                   <Link
                     href="/auth/sign-in"

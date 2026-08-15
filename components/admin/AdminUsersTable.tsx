@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn, formatDate } from "@/lib/utils"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 
 type UserRow = {
   id: string
@@ -169,8 +170,11 @@ export default function AdminUsersTable({
   const [users, setUsers] = useState<UserRow[]>(initialUsers)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<UserRow | null>(null)
+  const { guardMutation } = usePreviewMode()
 
   const promoteUser = useCallback(async (user: UserRow) => {
+    if (guardMutation()) return
+
     setLoadingId(user.id)
     try {
       const response = await fetch("/api/admin/authors", {
@@ -194,10 +198,14 @@ export default function AdminUsersTable({
     } finally {
       setLoadingId(null)
     }
-  }, [])
+  }, [guardMutation])
 
   const deleteUser = useCallback(async () => {
     if (!pendingDelete) return
+    if (guardMutation()) {
+      setPendingDelete(null)
+      return
+    }
 
     const user = pendingDelete
     setLoadingId(user.id)
@@ -219,7 +227,7 @@ export default function AdminUsersTable({
     } finally {
       setLoadingId(null)
     }
-  }, [pendingDelete])
+  }, [guardMutation, pendingDelete])
 
   const columns: DashboardTableColumn<UserRow>[] = [
     {

@@ -1,14 +1,25 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { z } from "zod";
+import { requireSession } from "@/lib/requireRole";
+
+const commentSchema = z.object({
+  blogId: z.string().refine(ObjectId.isValid, "Invalid blog id"),
+  message: z.string().trim().min(1).max(2_000),
+});
 
 export async function POST(req: Request) {
   try {
-    const { blogId, name, message } = await req.json();
+    const session = await requireSession();
+    const parsed = commentSchema.safeParse(await req.json());
 
-    if (!blogId || !name || !message) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid comment" }, { status: 400 });
     }
+
+    const { blogId, message } = parsed.data;
+    const name = session.user.name?.trim() || "Signed-in user";
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
@@ -25,6 +36,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Failed to post comment:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },

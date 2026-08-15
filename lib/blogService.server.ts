@@ -490,6 +490,25 @@ export async function getEditableBlogForUser(
   }
 }
 
+export async function getShowcaseEditableBlogById(
+  id: string
+): Promise<EditableBlog | null> {
+  if (!ObjectId.isValid(id)) return null
+
+  try {
+    const db = await getDatabase()
+    const doc = await collection(db).findOne({
+      ...PUBLIC_POST_FILTER,
+      _id: new ObjectId(id),
+    })
+
+    return doc ? await editableBlog(doc) : null
+  } catch (error) {
+    console.error("Failed to fetch showcase blog:", error)
+    return null
+  }
+}
+
 export async function getAllBlogs(): Promise<PublicBlog[]> {
   try {
     const db = await getDatabase()
@@ -674,6 +693,33 @@ export async function getDashboardPostsByAuthorId(
   }
 }
 
+export async function getShowcaseDashboardPosts(): Promise<
+  DashboardPostSummary[]
+> {
+  try {
+    const db = await getDatabase()
+    const docs = await collection(db)
+      .find(PUBLIC_POST_FILTER)
+      .project({ editorState: 0, contentHtml: 0 })
+      .sort({ updatedAt: -1 })
+      .toArray()
+
+    return docs.map((doc) => ({
+      id: doc._id.toString(),
+      title: doc.title || "Untitled post",
+      category: doc.category ?? "",
+      status: "published",
+      likes: doc.likes ?? 0,
+      createdAt: new Date(doc.createdAt).toISOString(),
+      updatedAt: new Date(doc.updatedAt).toISOString(),
+      slug: doc.slug ?? null,
+    }))
+  } catch (error) {
+    console.error("Failed to fetch showcase dashboard posts:", error)
+    return []
+  }
+}
+
 export async function getAllBlogsForAdmin(): Promise<AdminPostSummary[]> {
   const db = await getDatabase()
   const docs = await collection(db)
@@ -690,6 +736,30 @@ export async function getAllBlogsForAdmin(): Promise<AdminPostSummary[]> {
     createdAt: new Date(doc.createdAt).toISOString(),
     updatedAt: new Date(doc.updatedAt).toISOString(),
   }))
+}
+
+export async function getShowcaseAdminPosts(): Promise<AdminPostSummary[]> {
+  try {
+    const db = await getDatabase()
+    const docs = await collection(db)
+      .find(PUBLIC_POST_FILTER)
+      .project({ editorState: 0, contentHtml: 0 })
+      .sort({ updatedAt: -1 })
+      .toArray()
+
+    return docs.map((doc) => ({
+      id: doc._id.toString(),
+      title: doc.title,
+      author: doc.authorName,
+      category: doc.category,
+      status: "published",
+      createdAt: new Date(doc.createdAt).toISOString(),
+      updatedAt: new Date(doc.updatedAt).toISOString(),
+    }))
+  } catch (error) {
+    console.error("Failed to fetch showcase admin posts:", error)
+    return []
+  }
 }
 
 export async function likeBlogBySlug(slug: string): Promise<number | null> {

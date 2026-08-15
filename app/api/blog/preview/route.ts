@@ -5,6 +5,7 @@ import {
   InvalidSerializedEditorStateError,
   renderSerializedEditorStateToHtml,
 } from "@/lib/editor/serialization.server"
+import { isPreviewRequest } from "@/lib/previewRequest.server"
 import { requireRole } from "@/lib/requireRole"
 
 export const runtime = "nodejs"
@@ -43,7 +44,10 @@ function errorResponse(error: unknown): Response {
 
 export async function POST(request: Request) {
   try {
-    await requireRole(["author", "admin"])
+    const previewAllowed = await isPreviewRequest()
+    if (!previewAllowed) {
+      await requireRole(["author", "admin"])
+    }
 
     const contentLength = Number(request.headers.get("content-length"))
     if (

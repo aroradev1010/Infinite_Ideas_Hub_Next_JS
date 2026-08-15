@@ -12,8 +12,11 @@ import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAuthorByUserId } from "@/lib/authorService"
-import { getDashboardPostsByAuthorId } from "@/lib/blogService.server"
-import { requireRolePage } from "@/lib/requireRole"
+import {
+  getDashboardPostsByAuthorId,
+  getShowcaseDashboardPosts,
+} from "@/lib/blogService.server"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 import PrimaryButton from "@/components/PrimaryButton"
 
 const summaryCards = [
@@ -39,10 +42,13 @@ const summaryCards = [
 ]
 
 export default async function DashboardPage() {
-  const session = await requireRolePage(["author", "admin"])
-  const author = await getAuthorByUserId(session.user.id)
+  const access = await requireRoleOrPreviewPage(["author", "admin"])
+  const author =
+    access.kind === "authenticated"
+      ? await getAuthorByUserId(access.session.user.id)
+      : null
 
-  if (!author) {
+  if (access.kind === "authenticated" && !author) {
     return (
       <section>
         <header>
@@ -72,7 +78,10 @@ export default async function DashboardPage() {
     )
   }
 
-  const posts = await getDashboardPostsByAuthorId(author.id)
+  const posts =
+    access.kind === "preview"
+      ? await getShowcaseDashboardPosts()
+      : await getDashboardPostsByAuthorId(author!.id)
   const counts = {
     total: posts.length,
     published: posts.filter((post) => post.status === "published").length,
@@ -85,7 +94,11 @@ export default async function DashboardPage() {
       <DashboardPageHeader
         eyebrow="Overview"
         title="Dashboard"
-        description="Pick up where you left off and keep your publishing moving."
+        description={
+          access.kind === "preview"
+            ? "Explore the publishing workflow using public posts."
+            : "Pick up where you left off and keep your publishing moving."
+        }
         action={
           <Link href="/dashboard/create">
             <PrimaryButton
@@ -118,7 +131,9 @@ export default async function DashboardPage() {
               Recent Posts
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              Your five most recently updated posts.
+              {access.kind === "preview"
+                ? "Five recently updated public posts."
+                : "Your five most recently updated posts."}
             </p>
           </div>
           <Button

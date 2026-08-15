@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
         hostname: "img.magnific.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn0.gstatic.com",
+        pathname: "/**",
+      },
     ],
   },
   eslint: {

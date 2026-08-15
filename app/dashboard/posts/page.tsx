@@ -3,15 +3,21 @@ import Link from "next/link"
 import DashboardBlogsTable from "@/components/dashboard/DashboardBlogsTable"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAuthorByUserId } from "@/lib/authorService"
-import { getDashboardPostsByAuthorId } from "@/lib/blogService.server"
-import { requireRolePage } from "@/lib/requireRole"
+import {
+  getDashboardPostsByAuthorId,
+  getShowcaseDashboardPosts,
+} from "@/lib/blogService.server"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 import PrimaryButton from "@/components/PrimaryButton"
 
 export default async function DashboardPostsPage() {
-  const session = await requireRolePage(["author", "admin"])
-  const author = await getAuthorByUserId(session.user.id)
+  const access = await requireRoleOrPreviewPage(["author", "admin"])
+  const author =
+    access.kind === "authenticated"
+      ? await getAuthorByUserId(access.session.user.id)
+      : null
 
-  if (!author) {
+  if (access.kind === "authenticated" && !author) {
     return (
       <section>
         <header>
@@ -41,7 +47,10 @@ export default async function DashboardPostsPage() {
     )
   }
 
-  const posts = await getDashboardPostsByAuthorId(author.id)
+  const posts =
+    access.kind === "preview"
+      ? await getShowcaseDashboardPosts()
+      : await getDashboardPostsByAuthorId(author!.id)
 
   return (
     <section>
@@ -54,7 +63,9 @@ export default async function DashboardPostsPage() {
             Posts
           </h1>
           <p className="mt-2 text-sm text-gray-500 sm:text-base">
-            Search, edit, and manage your published work and drafts.
+            {access.kind === "preview"
+              ? "Search and explore the editing experience with public posts."
+              : "Search, edit, and manage your published work and drafts."}
           </p>
         </div>
         <Link href="/dashboard/create">

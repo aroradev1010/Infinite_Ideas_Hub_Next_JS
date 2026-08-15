@@ -11,9 +11,15 @@ import AdminPostsTable from "@/components/admin/AdminPostsTable"
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
 import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard"
 import { Button } from "@/components/ui/button"
-import { getAllAuthorsForAdmin } from "@/lib/authorService"
-import { getAllBlogsForAdmin } from "@/lib/blogService.server"
-import { requireRolePage } from "@/lib/requireRole"
+import {
+  getAllAuthorsForAdmin,
+  getAllAuthorsForShowcase,
+} from "@/lib/authorService"
+import {
+  getAllBlogsForAdmin,
+  getShowcaseAdminPosts,
+} from "@/lib/blogService.server"
+import { requireRoleOrPreviewPage } from "@/lib/previewAccess.server"
 import { getAllUsersForAdmin } from "@/lib/userService"
 
 const summaryCards = [
@@ -45,12 +51,19 @@ const summaryCards = [
 ]
 
 export default async function AdminPage() {
-  await requireRolePage(["admin"])
-  const [posts, authors, users] = await Promise.all([
-    getAllBlogsForAdmin(),
-    getAllAuthorsForAdmin(),
-    getAllUsersForAdmin(),
-  ])
+  const access = await requireRoleOrPreviewPage(["admin"])
+  const [posts, authors, users] =
+    access.kind === "preview"
+      ? await Promise.all([
+          getShowcaseAdminPosts(),
+          getAllAuthorsForShowcase(),
+          Promise.resolve([]),
+        ])
+      : await Promise.all([
+          getAllBlogsForAdmin(),
+          getAllAuthorsForAdmin(),
+          getAllUsersForAdmin(),
+        ])
   const counts = {
     posts: posts.length,
     published: posts.filter((post) => post.status === "published").length,
@@ -58,17 +71,25 @@ export default async function AdminPage() {
     users: users.length,
   }
   const recentPosts = posts.slice(0, 5)
+  const visibleSummaryCards =
+    access.kind === "preview"
+      ? summaryCards.filter((card) => card.key !== "users")
+      : summaryCards
 
   return (
     <section className="space-y-9">
       <DashboardPageHeader
         eyebrow="Admin overview"
         title="Admin Dashboard"
-        description="Manage content, publishing, authors, and users."
+        description={
+          access.kind === "preview"
+            ? "Explore content, publishing, and author management with public data."
+            : "Manage content, publishing, authors, and users."
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
+        {visibleSummaryCards.map((card) => (
           <DashboardStatCard
             key={card.key}
             icon={card.icon}

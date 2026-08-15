@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Heart, Loader2 } from "lucide-react";
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider";
 
 export default function LikeButton({
   slug,
@@ -13,6 +14,7 @@ export default function LikeButton({
   const [likes, setLikes] = useState(initialLikes);
   const [loading, setLoading] = useState(false);
   const [liked, setLiked] = useState(false);
+  const { guardMutation } = usePreviewMode();
 
   useEffect(() => {
     const likedBlogs = JSON.parse(localStorage.getItem("likedBlogs") || "[]");
@@ -21,6 +23,7 @@ export default function LikeButton({
 
   const handleToggleLike = async () => {
     if (loading) return;
+    if (guardMutation()) return;
     setLoading(true);
 
     try {

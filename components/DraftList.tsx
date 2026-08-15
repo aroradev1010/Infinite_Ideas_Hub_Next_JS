@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import { deleteBlog } from "@/lib/blogService.client"
 import type { DraftSummary } from "@/types/blogType"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 
 interface DraftsListProps {
   initialDrafts: DraftSummary[]
@@ -14,8 +15,11 @@ interface DraftsListProps {
 export default function DraftsList({ initialDrafts }: DraftsListProps) {
   const [drafts, setDrafts] = useState(initialDrafts)
   const router = useRouter()
+  const { guardMutation } = usePreviewMode()
 
   const handleDelete = useCallback((draft: DraftSummary) => {
+    if (guardMutation()) return
+
     const toastId = toast("Delete draft?", {
       description: "This will permanently remove this draft.",
       action: {
@@ -44,7 +48,7 @@ export default function DraftsList({ initialDrafts }: DraftsListProps) {
         },
       },
     })
-  }, [])
+  }, [guardMutation])
 
   if (drafts.length === 0) {
     return (

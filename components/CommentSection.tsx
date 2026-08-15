@@ -17,6 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import PrimaryButton from "./PrimaryButton";
 import { useSession } from "next-auth/react";
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider";
 
 const commentSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -35,6 +36,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function CommentSection({ blogId }: { blogId: string }) {
   const { data: session, status } = useSession();
+  const { guardMutation } = usePreviewMode();
   const { data: comments = [], mutate } = useSWR<Comment[]>(
     `/api/comments?blogId=${blogId}`,
     fetcher
@@ -48,6 +50,8 @@ export default function CommentSection({ blogId }: { blogId: string }) {
   });
 
   const onSubmit = async (data: CommentFormData) => {
+    if (guardMutation()) return;
+
     if (!session?.user?.name) {
       toast.error("You must be logged in to comment.");
       return;
@@ -58,7 +62,6 @@ export default function CommentSection({ blogId }: { blogId: string }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         blogId,
-        name: session.user.name,
         message: data.message,
       }),
     });

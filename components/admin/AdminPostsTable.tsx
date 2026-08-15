@@ -22,6 +22,7 @@ import {
 } from "@/components/dashboard/DashboardTable"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,6 +114,7 @@ export default function AdminPostsTable({
   const [pendingDelete, setPendingDelete] =
     useState<AdminPostSummary | null>(null)
   const router = useRouter()
+  const { guardMutation } = usePreviewMode()
 
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -132,6 +134,11 @@ export default function AdminPostsTable({
     post: AdminPostSummary,
     action: "publish" | "unpublish" | "delete"
   ) {
+    if (guardMutation()) {
+      setPendingDelete(null)
+      return
+    }
+
     setLoadingId(post.id)
 
     try {

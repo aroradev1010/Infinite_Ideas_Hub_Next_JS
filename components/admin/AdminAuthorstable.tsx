@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { formatDate } from "@/lib/utils"
+import { usePreviewMode } from "@/components/preview/PreviewModeProvider"
 
 type AuthorRow = {
   id: string
@@ -134,6 +135,7 @@ export default function AdminAuthorsTable({
   const [form, setForm] = useState<AuthorForm>(emptyForm)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<AuthorRow | null>(null)
+  const { guardMutation } = usePreviewMode()
 
   const startEdit = useCallback((author: AuthorRow) => {
     setEditingId(author.id)
@@ -152,6 +154,8 @@ export default function AdminAuthorsTable({
 
   const saveEdit = useCallback(
     async (id: string) => {
+      if (guardMutation()) return
+
       setLoadingId(id)
       try {
         const response = await fetch("/api/admin/authors", {
@@ -177,11 +181,15 @@ export default function AdminAuthorsTable({
         setLoadingId(null)
       }
     },
-    [cancelEdit, form]
+    [cancelEdit, form, guardMutation]
   )
 
   const deleteAuthor = useCallback(async () => {
     if (!pendingDelete) return
+    if (guardMutation()) {
+      setPendingDelete(null)
+      return
+    }
 
     const author = pendingDelete
     setLoadingId(author.id)
@@ -203,7 +211,7 @@ export default function AdminAuthorsTable({
     } finally {
       setLoadingId(null)
     }
-  }, [pendingDelete])
+  }, [guardMutation, pendingDelete])
 
   function renderEditorInput(
     field: keyof AuthorForm,
