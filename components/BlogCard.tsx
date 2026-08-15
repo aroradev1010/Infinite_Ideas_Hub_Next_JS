@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import SecondaryButton from "./SecondaryButton";
-import { Blog } from "@/types/blogType";
+import type { PublicBlog } from "@/types/blogType";
 import { formatDate, slugify } from "@/lib/utils";
 
 interface BlogCardProps {
-  blog: Blog;
+  blog: PublicBlog;
   classNameDesktopImage?: string;
   webkitLineCLamp?: number;
 }
@@ -58,7 +58,9 @@ export default function BlogCard({
 
           <Link href={`/blog/${blog.slug}`} key={blog.id}>
             <span className="text-gray-700 mx-3">/</span>
-            <span className="text-gray-400">{formatDate(blog.createdAt)}</span>
+            <span className="text-gray-400">
+              {formatDate(blog.publishedAt)}
+            </span>
           </Link>
         </div>
         <Link href={`/blog/${blog.slug}`} key={blog.id}>
@@ -70,7 +72,7 @@ export default function BlogCard({
                 WebkitLineClamp: webkitLineCLamp || 3,
                 WebkitBoxOrient: "vertical",
               }}
-              dangerouslySetInnerHTML={{ __html: blog?.description }}
+              dangerouslySetInnerHTML={{ __html: blog.contentHtml }}
             ></div>
           </div>
         </Link>

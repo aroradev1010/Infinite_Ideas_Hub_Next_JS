@@ -1,28 +1,26 @@
-// app/categories/[slug]/page.tsx
-
-import StarBackground from "@/components/StarBackground";
-import { getCategoryBySlug } from "@/lib/categoryService";
-import { getBlogsByCategory } from "@/lib/blogService.server";
-import { notFound } from "next/navigation";
-import BlogCard from "@/components/BlogCard";
+import BlogCard from "@/components/BlogCard"
+import StarBackground from "@/components/StarBackground"
+import { getBlogCategoryBySlug } from "@/lib/blogCategories"
+import { getBlogsByCategory } from "@/lib/blogService.server"
+import { notFound } from "next/navigation"
 
 export default async function CategoryDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>
 }) {
-  const { slug } = await params;
-  const category = await getCategoryBySlug(slug);
-  if (!category) return notFound();
+  const { slug } = await params
+  const category = getBlogCategoryBySlug(slug)
+  if (!category) notFound()
 
-  const blogs = await getBlogsByCategory(category.name);
+  const blogs = await getBlogsByCategory(category.name)
 
   return (
     <div className="h-screen">
       {/* ─── Category Header ───────────────────────────────────────────────────────── */}
       <div className="h-96">
         <StarBackground
-          imageSrc={category.categoryImage || ""}
+          imageSrc={category.image}
           text={category.name}
           imageClassName="rounded-full h-[100px] w-[100px] mb-2"
         />
@@ -42,12 +40,12 @@ export default async function CategoryDetailPage({
           </div>
         ))}
 
-        {blogs.length === 0 && (
+        {blogs.length === 0 ? (
           <p className="text-center text-gray-500">
             No articles found in this category.
           </p>
-        )}
+        ) : null}
       </div>
     </div>
-  );
+  )
 }

@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/tests
+vitest.config.mts
 
 # next.js
 /.next/

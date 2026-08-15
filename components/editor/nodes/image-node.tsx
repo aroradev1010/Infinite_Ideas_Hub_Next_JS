@@ -12,7 +12,12 @@ import type {
   SerializedLexicalNode,
   Spread,
 } from "lexical"
-import { $applyNodeReplacement, createEditor, DecoratorNode } from "lexical"
+import {
+  $applyNodeReplacement,
+  $getRoot,
+  createEditor,
+  DecoratorNode,
+} from "lexical"
 
 const ImageComponent = React.lazy(() => import("../editor-ui/image-component"))
 
@@ -109,12 +114,47 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   }
 
   exportDOM(): DOMExportOutput {
-    const element = document.createElement("img")
-    element.setAttribute("src", this.__src)
-    element.setAttribute("alt", this.__altText)
-    element.setAttribute("width", this.__width.toString())
-    element.setAttribute("height", this.__height.toString())
-    return { element }
+    const figure = document.createElement("figure")
+    figure.className = "blog-image"
+    figure.setAttribute("data-lexical-image", "true")
+
+    const image = document.createElement("img")
+    image.setAttribute("src", this.__src)
+    image.setAttribute("alt", this.__altText)
+    image.setAttribute("loading", "lazy")
+
+    this.setValidDimension(image, "width", this.__width)
+    this.setValidDimension(image, "height", this.__height)
+
+    if (Number.isFinite(this.__maxWidth) && this.__maxWidth > 0) {
+      image.style.maxWidth = `${Math.round(this.__maxWidth)}px`
+    }
+
+    figure.append(image)
+
+    if (this.__showCaption) {
+      const captionText = this.__caption
+        .getEditorState()
+        .read(() => $getRoot().getTextContent().trim())
+
+      if (captionText) {
+        const caption = document.createElement("figcaption")
+        caption.textContent = captionText
+        figure.append(caption)
+      }
+    }
+
+    return { element: figure }
+  }
+
+  private setValidDimension(
+    image: HTMLImageElement,
+    attribute: "height" | "width",
+    value: "inherit" | number
+  ): void {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      image.setAttribute(attribute, String(Math.round(value)))
+    }
   }
 
   static importDOM(): DOMConversionMap | null {

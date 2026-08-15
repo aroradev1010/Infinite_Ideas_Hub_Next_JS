@@ -1,6 +1,5 @@
 import * as React from "react"
-import { JSX } from "react"
-import { BlockWithAlignableContents } from "@lexical/react/LexicalBlockWithAlignableContents"
+import { JSX, Suspense } from "react"
 import {
   DecoratorBlockNode,
   SerializedDecoratorBlockNode,
@@ -17,39 +16,14 @@ import type {
   Spread,
 } from "lexical"
 
-type YouTubeComponentProps = Readonly<{
-  className: Readonly<{
-    base: string
-    focus: string
-  }>
-  format: ElementFormatType | null
-  nodeKey: NodeKey
-  videoID: string
-}>
+const YouTubeComponent = React.lazy(
+  () => import("../../editor-ui/youtube-component")
+)
 
-function YouTubeComponent({
-  className,
-  format,
-  nodeKey,
-  videoID,
-}: YouTubeComponentProps) {
-  return (
-    <BlockWithAlignableContents
-      className={className}
-      format={format}
-      nodeKey={nodeKey}
-    >
-      <iframe
-        width="560"
-        height="315"
-        src={`https://www.youtube-nocookie.com/embed/${videoID}`}
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen={true}
-        title="YouTube video"
-      />
-    </BlockWithAlignableContents>
-  )
+function assertYouTubeVideoId(videoID: string): void {
+  if (!/^[A-Za-z0-9_-]{11}$/.test(videoID)) {
+    throw new Error("Invalid YouTube video ID")
+  }
 }
 
 export type SerializedYouTubeNode = Spread<
@@ -98,6 +72,7 @@ export class YouTubeNode extends DecoratorBlockNode {
 
   constructor(id: string, format?: ElementFormatType, key?: NodeKey) {
     super(format, key)
+    assertYouTubeVideoId(id)
     this.__id = id
   }
 
@@ -158,12 +133,14 @@ export class YouTubeNode extends DecoratorBlockNode {
       focus: embedBlockTheme.focus || "",
     }
     return (
-      <YouTubeComponent
-        className={className}
-        format={this.__format}
-        nodeKey={this.getKey()}
-        videoID={this.__id}
-      />
+      <Suspense fallback={null}>
+        <YouTubeComponent
+          className={className}
+          format={this.__format}
+          nodeKey={this.getKey()}
+          videoID={this.__id}
+        />
+      </Suspense>
     )
   }
 }

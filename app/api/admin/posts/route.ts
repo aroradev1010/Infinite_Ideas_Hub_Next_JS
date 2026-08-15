@@ -1,63 +1,66 @@
-// app/api/admin/posts/route.ts
-import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
-import { z } from "zod";
-import { requireRole } from "@/lib/requireRole";
-import { getAllBlogsForAdmin } from "@/lib/blogService.server";
+import {
+  deleteBlog,
+  getAllBlogsForAdmin,
+  updateBlogStatus,
+} from "@/lib/blogService.server"
+import { requireRole } from "@/lib/requireRole"
+import { z } from "zod"
 
-// Schema validation for PATCH requests
-const patchSchema = z.object({
-  id: z.string().min(1),
-  action: z.enum(["publish", "unpublish", "delete"]),
-});
-// GET: List all blogs (admin only)
+export const runtime = "nodejs"
+
+const actionSchema = z
+  .object({
+    id: z.string().min(1),
+    action: z.enum(["publish", "unpublish", "delete"]),
+  })
+  .strict()
+
 export async function GET() {
   try {
-    await requireRole(["admin"]);
-    const blogs = getAllBlogsForAdmin()
-
-    return NextResponse.json(blogs);
-  } catch (err: any) {
-    if (err instanceof NextResponse) return err;
-    console.error("Admin GET posts error:", err);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
+    await requireRole(["admin"])
+    const posts = await getAllBlogsForAdmin()
+    return Response.json({ ok: true, data: posts })
+  } catch (error) {
+    if (error instanceof Response) return error
+    console.error("Admin GET posts error:", error)
+    return Response.json(
+      { ok: false, error: "Internal Server Error" },
       { status: 500 }
-    );
+    )
   }
 }
 
-// PATCH: Update post status or delete
-export async function PATCH(req: Request) {
+export async function PATCH(request: Request) {
   try {
-    await requireRole(["admin"]);
-    const { id, action } = await req.json();
-    const parsed = patchSchema.safeParse({ id, action });
+    await requireRole(["admin"])
+    const parsed = actionSchema.safeParse(await request.json())
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      return Response.json(
+        { ok: false, error: "Invalid payload" },
+        { status: 400 }
+      )
     }
 
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const _id = new ObjectId(id);
-
+    const { id, action } = parsed.data
     if (action === "delete") {
-      await db.collection("blogs").deleteOne({ _id });
-      return NextResponse.json({ ok: true, action: "deleted", id });
+      const result = await deleteBlog(id)
+      return Response.json(result, { status: result.status ?? 500 })
     }
 
-    const newStatus = action === "publish" ? "published" : "draft";
-    await db
-      .collection("blogs")
-      .updateOne({ _id }, { $set: { status: newStatus } });
-    return NextResponse.json({ ok: true, id, action, status: newStatus });
-  } catch (err: any) {
-    if (err instanceof NextResponse) return err;
-    console.error("Admin PATCH posts error:", err);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
+    const status = action === "publish" ? "published" : "draft"
+    const result = await updateBlogStatus(id, status)
+    return Response.json(
+      result.ok
+        ? { ok: true, data: { id, status: result.data?.status ?? status } }
+        : result,
+      { status: result.status ?? 500 }
+    )
+  } catch (error) {
+    if (error instanceof Response) return error
+    console.error("Admin PATCH posts error:", error)
+    return Response.json(
+      { ok: false, error: "Internal Server Error" },
       { status: 500 }
-    );
+    )
   }
 }

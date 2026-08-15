@@ -1,7 +1,8 @@
+"use client"
+
 import * as React from "react"
 import { JSX, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin"
-import { useCollaborationContext } from "@lexical/react/LexicalCollaborationContext"
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext"
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary"
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin"
@@ -83,6 +84,8 @@ function LazyImage({
 }): JSX.Element {
   useSuspenseImage(src)
   return (
+    // The editor needs a native image element for direct resize/ref behavior.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       className={className || undefined}
       src={src}
@@ -101,8 +104,10 @@ function LazyImage({
 
 function BrokenImage(): JSX.Element {
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={""}
+      alt="Unable to load image"
       style={{
         height: 200,
         opacity: 0.2,
@@ -141,7 +146,6 @@ export default function ImageComponent({
   const [isSelected, setSelected, clearSelection] =
     useLexicalNodeSelection(nodeKey)
   const [isResizing, setIsResizing] = useState<boolean>(false)
-  const { isCollabActive } = useCollaborationContext()
   const [editor] = useLexicalComposerContext()
   const [selection, setSelection] = useState<BaseSelection | null>(null)
   const activeEditorRef = useRef<LexicalEditor | null>(null)

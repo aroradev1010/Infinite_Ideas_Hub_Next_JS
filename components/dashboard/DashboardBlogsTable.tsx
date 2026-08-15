@@ -6,9 +6,12 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { cn, formatDate } from "@/lib/utils";
 import { deleteBlog } from "@/lib/blogService.client";
-import type { Blog } from "@/types/blogType";
+import type { PublicBlog } from "@/types/blogType";
 
-type BlogRow = Pick<Blog, "id" | "title" | "category" | "status" | "likes" | "createdAt" | "slug">;
+type BlogRow = Pick<
+    PublicBlog,
+    "id" | "title" | "category" | "status" | "likes" | "createdAt" | "slug"
+>;
 
 export default function DashboardBlogsTable({ initialBlogs }: { initialBlogs: BlogRow[] }) {
     const [blogs, setBlogs] = useState<BlogRow[]>(initialBlogs);
@@ -24,8 +27,10 @@ export default function DashboardBlogsTable({ initialBlogs }: { initialBlogs: Bl
 
             setBlogs((prev) => prev.filter((b) => b.id !== blogId));
             toast.success(`"${blogTitle}" deleted.`);
-        } catch (err: any) {
-            toast.error(err.message || "Failed to delete blog.");
+        } catch (error: unknown) {
+            toast.error(
+                error instanceof Error ? error.message : "Failed to delete blog."
+            );
         } finally {
             setDeleting(null);
         }

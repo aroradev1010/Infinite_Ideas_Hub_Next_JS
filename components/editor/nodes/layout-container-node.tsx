@@ -18,16 +18,43 @@ export type SerializedLayoutContainerNode = Spread<
   SerializedElementNode
 >
 
+export const LAYOUT_TEMPLATE_COLUMNS = [
+  "1fr 1fr",
+  "1fr 3fr",
+  "1fr 1fr 1fr",
+  "1fr 2fr 1fr",
+  "1fr 1fr 1fr 1fr",
+] as const
+
+export type LayoutTemplateColumns = (typeof LAYOUT_TEMPLATE_COLUMNS)[number]
+
+function assertLayoutTemplateColumns(
+  templateColumns: string
+): asserts templateColumns is LayoutTemplateColumns {
+  if (
+    !LAYOUT_TEMPLATE_COLUMNS.includes(
+      templateColumns as LayoutTemplateColumns
+    )
+  ) {
+    throw new Error(`Unsupported layout template: ${templateColumns}`)
+  }
+}
+
 function $convertLayoutContainerElement(
   domNode: HTMLElement
 ): DOMConversionOutput | null {
   const styleAttributes = window.getComputedStyle(domNode)
-  const templateColumns = styleAttributes.getPropertyValue(
-    "grid-template-columns"
-  )
+  const templateColumns =
+    domNode.getAttribute("data-lexical-layout-template") ||
+    domNode.style.gridTemplateColumns ||
+    styleAttributes.getPropertyValue("grid-template-columns")
   if (templateColumns) {
-    const node = $createLayoutContainerNode(templateColumns)
-    return { node }
+    try {
+      const node = $createLayoutContainerNode(templateColumns)
+      return { node }
+    } catch {
+      return null
+    }
   }
   return null
 }
@@ -37,6 +64,7 @@ export class LayoutContainerNode extends ElementNode {
 
   constructor(templateColumns: string, key?: NodeKey) {
     super(key)
+    assertLayoutTemplateColumns(templateColumns)
     this.__templateColumns = templateColumns
   }
 
@@ -59,8 +87,15 @@ export class LayoutContainerNode extends ElementNode {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("div")
+    element.className = "blog-layout"
+    element.style.display = "grid"
     element.style.gridTemplateColumns = this.__templateColumns
+    element.style.gap = "0.625rem"
     element.setAttribute("data-lexical-layout-container", "true")
+    element.setAttribute(
+      "data-lexical-layout-template",
+      this.__templateColumns
+    )
     return { element }
   }
 
@@ -86,7 +121,7 @@ export class LayoutContainerNode extends ElementNode {
   }
 
   static importJSON(json: SerializedLayoutContainerNode): LayoutContainerNode {
-    return $createLayoutContainerNode(json.templateColumns)
+    return $createLayoutContainerNode(json.templateColumns).updateFromJSON(json)
   }
 
   isShadowRoot(): boolean {
@@ -111,6 +146,7 @@ export class LayoutContainerNode extends ElementNode {
   }
 
   setTemplateColumns(templateColumns: string) {
+    assertLayoutTemplateColumns(templateColumns)
     this.getWritable().__templateColumns = templateColumns
   }
 }

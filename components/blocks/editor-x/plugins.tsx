@@ -13,7 +13,7 @@ import { ClickableLinkPlugin } from "@lexical/react/LexicalClickableLinkPlugin"
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary"
 import { HashtagPlugin } from "@lexical/react/LexicalHashtagPlugin"
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin"
-import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin"
+import { HorizontalRulePlugin } from "@/components/editor/plugins/horizontal-rule-plugin"
 import { ListPlugin } from "@lexical/react/LexicalListPlugin"
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin"
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin"
@@ -33,7 +33,6 @@ import { ShareContentPlugin } from "@/components/editor/plugins/actions/share-co
 import { SpeechToTextPlugin } from "@/components/editor/plugins/actions/speech-to-text-plugin"
 import { TreeViewPlugin } from "@/components/editor/plugins/actions/tree-view-plugin"
 import { AutoLinkPlugin } from "@/components/editor/plugins/auto-link-plugin"
-import { AutocompletePlugin } from "@/components/editor/plugins/autocomplete-plugin"
 import { CodeActionMenuPlugin } from "@/components/editor/plugins/code-action-menu-plugin"
 import { CodeHighlightPlugin } from "@/components/editor/plugins/code-highlight-plugin"
 import { ComponentPickerMenuPlugin } from "@/components/editor/plugins/component-picker-menu-plugin"
@@ -106,7 +105,7 @@ import { ButtonGroup } from "@/components/ui/button-group"
 import { Separator } from "@/components/ui/separator"
 
 const placeholder = "Press / for commands..."
-const maxLength = 3000
+const maxLength = 7000
 
 export function Plugins({}) {
   const [floatingAnchorElem, setFloatingAnchorElem] =
@@ -224,7 +223,6 @@ export function Plugins({}) {
         />
         <TypingPerfPlugin />
         <TabFocusPlugin />
-        <AutocompletePlugin />
         <AutoLinkPlugin />
         <LinkPlugin />
 

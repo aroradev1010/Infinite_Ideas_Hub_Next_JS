@@ -1,6 +1,5 @@
 import * as React from "react"
-import { JSX, useCallback, useEffect, useRef, useState } from "react"
-import { BlockWithAlignableContents } from "@lexical/react/LexicalBlockWithAlignableContents"
+import { JSX, Suspense } from "react"
 import {
   DecoratorBlockNode,
   SerializedDecoratorBlockNode,
@@ -17,23 +16,18 @@ import type {
   Spread,
 } from "lexical"
 
-const WIDGET_SCRIPT_URL = "https://platform.twitter.com/widgets.js"
+const TweetComponent = React.lazy(
+  () => import("../../editor-ui/tweet-component")
+)
 
-type TweetComponentProps = Readonly<{
-  className: Readonly<{
-    base: string
-    focus: string
-  }>
-  format: ElementFormatType | null
-  loadingComponent?: JSX.Element | string
-  nodeKey: NodeKey
-  onError?: (error: string) => void
-  onLoad?: () => void
-  tweetID: string
-}>
+function assertTweetId(id: string): void {
+  if (!/^\d{1,30}$/.test(id)) {
+    throw new Error("Invalid tweet ID")
+  }
+}
 
 function $convertTweetElement(
-  domNode: HTMLDivElement
+  domNode: HTMLElement
 ): DOMConversionOutput | null {
   const id = domNode.getAttribute("data-lexical-tweet-id")
   if (id) {
@@ -41,78 +35,6 @@ function $convertTweetElement(
     return { node }
   }
   return null
-}
-
-let isTwitterScriptLoading = true
-
-function TweetComponent({
-  className,
-  format,
-  loadingComponent,
-  nodeKey,
-  onError,
-  onLoad,
-  tweetID,
-}: TweetComponentProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
-  const previousTweetIDRef = useRef<string>("")
-  const [isTweetLoading, setIsTweetLoading] = useState(false)
-
-  const createTweet = useCallback(async () => {
-    try {
-      // @ts-expect-error Twitter is attached to the window.
-      await window.twttr.widgets.createTweet(tweetID, containerRef.current)
-
-      setIsTweetLoading(false)
-      isTwitterScriptLoading = false
-
-      if (onLoad) {
-        onLoad()
-      }
-    } catch (error) {
-      if (onError) {
-        onError(String(error))
-      }
-    }
-  }, [onError, onLoad, tweetID])
-
-  useEffect(() => {
-    if (tweetID !== previousTweetIDRef.current) {
-      setIsTweetLoading(true)
-
-      if (isTwitterScriptLoading) {
-        const script = document.createElement("script")
-        script.src = WIDGET_SCRIPT_URL
-        script.async = true
-        document.body?.appendChild(script)
-        script.onload = createTweet
-        if (onError) {
-          script.onerror = onError as OnErrorEventHandler
-        }
-      } else {
-        createTweet()
-      }
-
-      if (previousTweetIDRef) {
-        previousTweetIDRef.current = tweetID
-      }
-    }
-  }, [createTweet, onError, tweetID])
-
-  return (
-    <BlockWithAlignableContents
-      className={className}
-      format={format}
-      nodeKey={nodeKey}
-    >
-      {isTweetLoading ? loadingComponent : null}
-      <div
-        style={{ display: "inline-block", width: "550px" }}
-        ref={containerRef}
-      />
-    </BlockWithAlignableContents>
-  )
 }
 
 export type SerializedTweetNode = Spread<
@@ -148,9 +70,18 @@ export class TweetNode extends DecoratorBlockNode {
     }
   }
 
-  static importDOM(): DOMConversionMap<HTMLDivElement> | null {
+  static importDOM(): DOMConversionMap<HTMLElement> | null {
     return {
-      div: (domNode: HTMLDivElement) => {
+      blockquote: (domNode: HTMLElement) => {
+        if (!domNode.hasAttribute("data-lexical-tweet-id")) {
+          return null
+        }
+        return {
+          conversion: $convertTweetElement,
+          priority: 2,
+        }
+      },
+      div: (domNode: HTMLElement) => {
         if (!domNode.hasAttribute("data-lexical-tweet-id")) {
           return null
         }
@@ -163,15 +94,22 @@ export class TweetNode extends DecoratorBlockNode {
   }
 
   exportDOM(): DOMExportOutput {
-    const element = document.createElement("div")
+    const element = document.createElement("blockquote")
+    element.className = "twitter-tweet"
     element.setAttribute("data-lexical-tweet-id", this.__id)
-    const text = document.createTextNode(this.getTextContent())
-    element.append(text)
+
+    const link = document.createElement("a")
+    link.setAttribute("href", this.getTextContent())
+    link.setAttribute("target", "_blank")
+    link.setAttribute("rel", "noopener noreferrer")
+    link.textContent = "View post on X"
+    element.append(link)
     return { element }
   }
 
   constructor(id: string, format?: ElementFormatType, key?: NodeKey) {
     super(format, key)
+    assertTweetId(id)
     this.__id = id
   }
 
@@ -195,13 +133,15 @@ export class TweetNode extends DecoratorBlockNode {
       focus: embedBlockTheme.focus || "",
     }
     return (
-      <TweetComponent
-        className={className}
-        format={this.__format}
-        loadingComponent="Loading..."
-        nodeKey={this.getKey()}
-        tweetID={this.__id}
-      />
+      <Suspense fallback={null}>
+        <TweetComponent
+          className={className}
+          format={this.__format}
+          loadingComponent="Loading..."
+          nodeKey={this.getKey()}
+          tweetID={this.__id}
+        />
+      </Suspense>
     )
   }
 }

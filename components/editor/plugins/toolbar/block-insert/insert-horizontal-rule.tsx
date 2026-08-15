@@ -1,6 +1,6 @@
 "use client"
 
-import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode"
+import { INSERT_HORIZONTAL_RULE_COMMAND } from "@/components/editor/nodes/horizontal-rule-node"
 import { ScissorsIcon } from "lucide-react"
 
 import { useToolbarContext } from "@/components/editor/context/toolbar-context"

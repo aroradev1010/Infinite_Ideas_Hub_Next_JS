@@ -1,6 +1,7 @@
 import { addClassNamesToElement } from "@lexical/utils"
 import type {
   DOMConversionMap,
+  DOMExportOutput,
   EditorConfig,
   LexicalNode,
   SerializedElementNode,
@@ -30,12 +31,18 @@ export class LayoutItemNode extends ElementNode {
     return false
   }
 
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement("div")
+    element.className = "blog-layout-item"
+    return { element }
+  }
+
   static importDOM(): DOMConversionMap | null {
     return {}
   }
 
-  static importJSON(): LayoutItemNode {
-    return $createLayoutItemNode()
+  static importJSON(json: SerializedLayoutItemNode): LayoutItemNode {
+    return $createLayoutItemNode().updateFromJSON(json)
   }
 
   isShadowRoot(): boolean {

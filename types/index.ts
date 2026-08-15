@@ -3,7 +3,5 @@
 
 export * from "./db";
 export * from "./blogType";
-export * from "./draftType";
 export * from "./authorType";
-export * from "./categoryType";
 export * from "./userType";

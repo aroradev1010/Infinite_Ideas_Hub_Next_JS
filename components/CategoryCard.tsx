@@ -1,9 +1,9 @@
-// components/CategoryCard.tsx
-import Link from "next/link";
-import { Category } from "@/types/categoryType";
+import Link from "next/link"
+
+import type { BlogCategoryDefinition } from "@/lib/blogCategories"
 
 interface CategoryCardProps {
-  category: Category;
+  category: BlogCategoryDefinition
 }
 
 export default function CategoryCard({ category }: CategoryCardProps) {
@@ -17,5 +17,5 @@ export default function CategoryCard({ category }: CategoryCardProps) {
         </div>
       </div>
     </Link>
-  );
+  )
 }

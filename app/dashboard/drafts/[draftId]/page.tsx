@@ -1,51 +1,32 @@
-// app/dashboard/drafts/[draftId]/page.tsx
-import { notFound } from "next/navigation";
-import { requireRolePage } from "@/lib/requireRole";
-import clientPromise from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
-import DraftEditorClient from "@/components/DraftEditorClient";
+import CreateEditBlogClient from "@/components/CreateEditBlogClient"
+import { getEditableBlogForUser } from "@/lib/blogService.server"
+import { requireRolePage } from "@/lib/requireRole"
+import { notFound } from "next/navigation"
 
-type Props = {
-    params: Promise<{
-        draftId: string;
-    }>;
-};
+interface EditDraftPageProps {
+  params: Promise<{ draftId: string }>
+}
 
-export default async function EditDraftPage({ params }: Props) {
-    const session = await requireRolePage(["author", "admin"]);
-    const userId = session.user?.id;
-    const { draftId } = await params;
+export default async function EditDraftPage({ params }: EditDraftPageProps) {
+  const session = await requireRolePage(["author", "admin"])
+  const { draftId } = await params
+  const draft = await getEditableBlogForUser(
+    draftId,
+    session.user.id,
+    session.user.role === "admin"
+  )
 
-    if (!ObjectId.isValid(draftId)) return notFound();
+  if (!draft || draft.status !== "draft") notFound()
 
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-
-    const draft = await db.collection("drafts").findOne({
-        _id: new ObjectId(draftId),
-        userId: new ObjectId(userId),
-    });
-
-    if (!draft) return notFound();
-
-    const payload = {
-        draftId: draft._id.toString(),
-        blogId: draft.blogId ? draft.blogId.toString() : null,
-        title: draft.title || "",
-        description: draft.description || "",
-        image: draft.image || "",
-        category: draft.category || "",
-        status: draft.status || "draft",
-    };
-
-    return (
-        <section className="py-10">
-            <div className="max-w-6xl mx-auto px-4">
-                <h1 className="text-3xl font-bold mb-6">Edit Draft</h1>
-                {/* DraftEditorClient is a client component that handles save/publish/delete */}
-                {/* initialDraft prop contains draftId + blogId if linked */}
-                <DraftEditorClient initialDraft={payload} />
-            </div>
-        </section>
-    );
+  return (
+    <section className="py-10">
+      <div className="mx-auto max-w-6xl px-4">
+        <h1 className="mb-6 text-3xl font-bold">Edit Draft</h1>
+        <CreateEditBlogClient
+          initialBlog={draft}
+          currentAuthor={{ name: draft.author, slug: draft.authorSlug }}
+        />
+      </div>
+    </section>
+  )
 }

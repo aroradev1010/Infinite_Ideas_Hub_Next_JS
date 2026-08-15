@@ -1,12 +1,9 @@
-// components/PopularCategories.tsx
+import { BLOG_CATEGORIES } from "@/lib/blogCategories"
+import Image from "next/image"
+import Link from "next/link"
 
-import { getAllCategories } from "@/lib/categoryService";
-import Image from "next/image";
-import Link from "next/link";
-
-const PopularCategories = async () => {
-  const categories = await getAllCategories();
-  const topCategories = categories.slice(0, 6); // limit to 6
+const PopularCategories = () => {
+  const topCategories = BLOG_CATEGORIES.slice(0, 6)
 
   return (
     <div className="mt-10">
@@ -16,12 +13,12 @@ const PopularCategories = async () => {
       <div className="space-y-4">
         {topCategories.map((category) => (
           <Link
-            key={category.id}
+            key={category.slug}
             href={`/categories/${category.slug}`}
             className="flex items-center gap-3 hover:opacity-70 transition-opacity"
           >
             <Image
-              src={`${category.categoryImage}`}
+              src={category.image}
               alt={category.name}
               width={36}
               height={36}
@@ -34,7 +31,7 @@ const PopularCategories = async () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PopularCategories;
+export default PopularCategories

@@ -1,550 +1,730 @@
-// lib/blogService.server.ts
-import clientPromise from "./mongodb";
-import { transformBlog } from "@/models/blogModel";
-import { Blog, BlogInsert } from "@/types/blogType";
-import { ObjectId } from "mongodb";
-import { ApiResponse } from "@/types/db";
-import { AuthorDoc } from "@/types";
+import "server-only"
 
-/**
- * Server-side blog service.
- * - This file is server-only (name .server.ts and import only from server routes).
- * - createBlog & updateBlog return ApiResponse<Blog> to let routes map to HTTP responses.
- *
- * Read helpers (getFeaturedBlog, getBlogBySlug, etc.) are left returning Blog|null
- * so existing code using them doesn't break. You can change them to ApiResponse later
- * if you want end-to-end uniformity.
- */
+import type { Collection, Db, Filter } from "mongodb"
+import { ObjectId } from "mongodb"
 
-/* -----------------------
-   Read / utility functions
-   (unchanged behaviours)
-   ----------------------- */
+import clientPromise from "@/lib/mongodb"
+import { BLOG_CATEGORIES, isBlogCategory } from "@/lib/blogCategories"
+import {
+  transformEditableBlog,
+  transformPublicBlog,
+} from "@/models/blogModel"
+import type { AuthorDoc } from "@/types"
+import type {
+  AdminPostSummary,
+  BlogInput,
+  BlogStatus,
+  DraftSummary,
+  EditableBlog,
+  PublicBlog,
+} from "@/types/blogType"
+import type { ApiResponse } from "@/types/db"
+import type {
+  BlogDocument,
+  BlogInsert,
+} from "@/types/server/blogServerTypes"
 
-export async function getFeaturedBlog(): Promise<Blog | null> {
+const BLOG_COLLECTION = "blogs"
+const FALLBACK_IMAGE = "/fallback.avif"
+const MAX_DATA_IMAGE_BYTES = 4 * 1024 * 1024
+
+const PUBLIC_POST_FILTER: Filter<BlogDocument> = {
+  status: "published",
+  slug: { $type: "string" },
+  contentHtml: { $type: "string" },
+}
+
+interface PreparedPostInput {
+  title: string
+  editorState: BlogInput["editorState"]
+  contentHtml: string | null
+  image: string
+  category: string
+  status: BlogStatus
+}
+
+function loadSerialization() {
+  return import("@/lib/editor/serialization.server")
+}
+
+function collection(db: Db): Collection<BlogDocument> {
+  return db.collection<BlogDocument>(BLOG_COLLECTION)
+}
+
+async function getDatabase(): Promise<Db> {
+  const client = await clientPromise
+  return client.db(process.env.MONGODB_DB)
+}
+
+function slugify(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 180)
+
+  return slug || "post"
+}
+
+async function ensureBlogIndexes(db: Db): Promise<void> {
+  await collection(db).createIndex(
+    { slug: 1 },
+    {
+      name: "unique_published_slug",
+      partialFilterExpression: { slug: { $type: "string" } },
+      unique: true,
+    }
+  )
+}
+
+async function createUniqueSlug(
+  posts: Collection<BlogDocument>,
+  title: string,
+  excludedId?: ObjectId
+): Promise<string> {
+  const base = slugify(title)
+  let candidate = base
+  let suffix = 1
+
+  while (
+    await posts.findOne({
+      slug: candidate,
+      ...(excludedId ? { _id: { $ne: excludedId } } : {}),
+    })
+  ) {
+    candidate = `${base}-${suffix++}`
+  }
+
+  return candidate
+}
+
+function isRasterDataUrl(value: string): boolean {
+  const match =
+    /^data:image\/(?:gif|jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/i.exec(
+      value
+    )
+
+  if (!match) return false
+  return Buffer.byteLength(match[1], "base64") <= MAX_DATA_IMAGE_BYTES
+}
+
+function isSupportedImageSource(value: string): boolean {
+  if (isRasterDataUrl(value)) return true
+
+  if (value.startsWith("/") && !value.startsWith("//")) {
+    return value.length <= 2048 && !/[\u0000-\u001f\s]/.test(value)
+  }
+
+  if (value.length > 2048) return false
+
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const blog = await db
-      .collection("blogs")
-      .find({ status: "published" })
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
+}
+
+function normalizeCoverImage(value: string): string {
+  const image = value.trim()
+  if (!image) return FALLBACK_IMAGE
+
+  if (!isSupportedImageSource(image)) {
+    throw new Error(
+      "Image must be an HTTP(S) URL, a relative path, or a supported raster data URL"
+    )
+  }
+
+  return image
+}
+
+function assertEditorImageSources(editorState: BlogInput["editorState"]): void {
+  const stack: unknown[] = [editorState.root]
+
+  while (stack.length > 0) {
+    const current = stack.pop()
+    if (typeof current !== "object" || current === null) continue
+
+    const node = current as Record<string, unknown>
+    if (node.type === "image") {
+      if (
+        typeof node.src !== "string" ||
+        !isSupportedImageSource(node.src)
+      ) {
+        throw new Error("Editor content contains an unsupported image source")
+      }
+    }
+
+    if (Array.isArray(node.children)) {
+      stack.push(...node.children)
+    }
+  }
+}
+
+async function preparePostInput(input: BlogInput): Promise<PreparedPostInput> {
+  const {
+    extractPlainText,
+    parseSerializedEditorState,
+    renderSerializedEditorStateToHtml,
+  } = await loadSerialization()
+  const restored = parseSerializedEditorState(input.editorState)
+  assertEditorImageSources(restored.serializedState)
+
+  const title = input.title.trim()
+  const category = input.category.trim()
+  if (!isBlogCategory(category)) {
+    throw new Error(
+      `Category must be one of: ${BLOG_CATEGORIES.map((item) => item.name).join(", ")}`
+    )
+  }
+  const image = normalizeCoverImage(input.image)
+
+  if (input.status === "published") {
+    if (title.length < 3) {
+      throw new Error("Title must be at least 3 characters")
+    }
+
+    const plainText = extractPlainText(restored.serializedState).trim()
+    if (plainText.length < 20) {
+      throw new Error("Published content must contain at least 20 characters")
+    }
+
+    return {
+      title,
+      editorState: restored.serializedState,
+      contentHtml: renderSerializedEditorStateToHtml(
+        restored.serializedState
+      ),
+      image,
+      category,
+      status: input.status,
+    }
+  }
+
+  return {
+    title,
+    editorState: restored.serializedState,
+    contentHtml: null,
+    image,
+    category,
+    status: input.status,
+  }
+}
+
+function serviceError(error: unknown): ApiResponse<never> {
+  if (
+    error instanceof Error &&
+    error.name === "InvalidSerializedEditorStateError"
+  ) {
+    return { ok: false, error: error.message, status: 400 }
+  }
+
+  if (
+    error instanceof Error &&
+    /(?:category|image|title|content)/i.test(error.message)
+  ) {
+    return { ok: false, error: error.message, status: 400 }
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  ) {
+    return { ok: false, error: "A post with this slug already exists", status: 409 }
+  }
+
+  console.error("Blog service error:", error)
+  return { ok: false, error: "Internal Server Error", status: 500 }
+}
+
+async function getOrCreateAuthor(
+  db: Db,
+  authorUserId: string,
+  now: Date
+): Promise<AuthorDoc> {
+  if (!ObjectId.isValid(authorUserId)) {
+    throw new Error("Invalid author user ID")
+  }
+
+  const userId = new ObjectId(authorUserId)
+  let author = await db.collection<AuthorDoc>("authors").findOne({ userId })
+  if (author) return author
+
+  const authorSlug = `author-${Date.now()}`
+  const inserted = await db.collection<Omit<AuthorDoc, "_id">>("authors").insertOne({
+    userId,
+    name: "Unknown Author",
+    bio: "",
+    profileImage: FALLBACK_IMAGE,
+    slug: authorSlug,
+    createdAt: now,
+    updatedAt: now,
+  })
+
+  author = await db
+    .collection<AuthorDoc>("authors")
+    .findOne({ _id: inserted.insertedId })
+
+  if (!author) throw new Error("Author creation failed")
+  return author
+}
+
+async function editableBlog(doc: BlogDocument): Promise<EditableBlog> {
+  const { extractPlainText } = await loadSerialization()
+  return transformEditableBlog(doc, extractPlainText(doc.editorState))
+}
+
+export async function createBlog(
+  input: BlogInput,
+  authorUserId: string
+): Promise<ApiResponse<EditableBlog>> {
+  try {
+    const prepared = await preparePostInput(input)
+    const db = await getDatabase()
+    await ensureBlogIndexes(db)
+
+    const now = new Date()
+    const author = await getOrCreateAuthor(db, authorUserId, now)
+    const posts = collection(db)
+    const slug =
+      prepared.status === "published"
+        ? await createUniqueSlug(posts, prepared.title)
+        : null
+
+    const document: BlogInsert = {
+      ...prepared,
+      slug,
+      authorId: author._id,
+      authorName: author.name ?? "Unknown Author",
+      authorSlug: author.slug ?? null,
+      likes: 0,
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: prepared.status === "published" ? now : null,
+    }
+
+    const inserted = await posts.insertOne(document as BlogDocument)
+    const created = await posts.findOne({ _id: inserted.insertedId })
+    if (!created) {
+      return { ok: false, error: "Post creation failed", status: 500 }
+    }
+
+    return { ok: true, data: await editableBlog(created), status: 201 }
+  } catch (error) {
+    return serviceError(error)
+  }
+}
+
+export async function updateBlog(
+  blogId: string,
+  input: BlogInput,
+  authorUserId?: string
+): Promise<ApiResponse<EditableBlog>> {
+  if (!ObjectId.isValid(blogId)) {
+    return { ok: false, error: "Invalid blog id", status: 400 }
+  }
+
+  try {
+    const prepared = await preparePostInput(input)
+    const db = await getDatabase()
+    await ensureBlogIndexes(db)
+
+    const posts = collection(db)
+    const _id = new ObjectId(blogId)
+    const existing = await posts.findOne({ _id })
+    if (!existing) {
+      return { ok: false, error: "Post not found", status: 404 }
+    }
+
+    if (authorUserId) {
+      if (!ObjectId.isValid(authorUserId)) {
+        return { ok: false, error: "Invalid author user ID", status: 400 }
+      }
+
+      const author = await db.collection<AuthorDoc>("authors").findOne({
+        userId: new ObjectId(authorUserId),
+      })
+
+      if (!author) {
+        return { ok: false, error: "Author not found", status: 404 }
+      }
+
+      if (existing.authorId.toString() !== author._id.toString()) {
+        return { ok: false, error: "Forbidden: not the owner", status: 403 }
+      }
+    }
+
+    const now = new Date()
+    const slug =
+      prepared.status === "published"
+        ? existing.slug ??
+          (await createUniqueSlug(posts, prepared.title, existing._id))
+        : existing.slug ?? null
+    const publishedAt =
+      prepared.status === "published"
+        ? existing.publishedAt ?? now
+        : existing.publishedAt ?? null
+
+    const updated = await posts.findOneAndUpdate(
+      { _id },
+      {
+        $set: {
+          ...prepared,
+          slug,
+          publishedAt,
+          updatedAt: now,
+        },
+      },
+      { returnDocument: "after" }
+    )
+
+    if (!updated) {
+      return { ok: false, error: "Post update failed", status: 500 }
+    }
+
+    return { ok: true, data: await editableBlog(updated), status: 200 }
+  } catch (error) {
+    return serviceError(error)
+  }
+}
+
+export async function updateBlogStatus(
+  blogId: string,
+  status: BlogStatus,
+  authorUserId?: string
+): Promise<ApiResponse<EditableBlog>> {
+  const existing = await getEditableBlogById(blogId)
+  if (!existing) {
+    return { ok: false, error: "Post not found", status: 404 }
+  }
+
+  return updateBlog(
+    blogId,
+    {
+      title: existing.title,
+      editorState: existing.editorState,
+      image: existing.image,
+      category: existing.category,
+      status,
+    },
+    authorUserId
+  )
+}
+
+export async function getFeaturedBlog(): Promise<PublicBlog | null> {
+  try {
+    const db = await getDatabase()
+    const doc = await collection(db)
+      .find(PUBLIC_POST_FILTER)
+      .project({ editorState: 0 })
       .sort({ likes: -1 })
       .limit(1)
-      .toArray();
+      .next()
 
-    return blog[0] ? transformBlog(blog[0]) : null;
+    return doc ? transformPublicBlog(doc as BlogDocument) : null
   } catch (error) {
-    console.error("Failed to fetch featured article:", error);
-    return null;
+    console.error("Failed to fetch featured article:", error)
+    return null
   }
 }
 
-export async function getBlogBySlug(slug: string): Promise<Blog | null> {
+export async function getBlogBySlug(
+  slug: string
+): Promise<PublicBlog | null> {
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const blog = await db.collection("blogs").findOne({ slug });
-    return blog ? transformBlog(blog) : null;
+    const db = await getDatabase()
+    const doc = await collection(db).findOne(
+      {
+        ...PUBLIC_POST_FILTER,
+        slug,
+      },
+      { projection: { editorState: 0 } }
+    )
+    return doc ? transformPublicBlog(doc as BlogDocument) : null
   } catch (error) {
-    console.error("Failed to fetch blog by slug:", error);
-    return null;
+    console.error("Failed to fetch blog by slug:", error)
+    return null
   }
 }
 
-export async function getBlogById(id: string): Promise<Blog | null> {
-  if (!ObjectId.isValid(id)) {
-    console.error("Invalid blog id:", id);
-    return null;
-  }
+export async function getEditableBlogById(
+  id: string
+): Promise<EditableBlog | null> {
+  if (!ObjectId.isValid(id)) return null
+
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const blog = await db
-      .collection("blogs")
-      .findOne({ _id: new ObjectId(id) });
-    return blog ? transformBlog(blog) : null;
+    const db = await getDatabase()
+    const doc = await collection(db).findOne({ _id: new ObjectId(id) })
+    return doc ? await editableBlog(doc) : null
   } catch (error) {
-    console.error("Failed to fetch blog by ID:", error);
-    return null;
+    console.error("Failed to fetch blog by ID:", error)
+    return null
   }
 }
 
-export async function getAllBlogs(): Promise<Blog[]> {
+export async function getEditableBlogForUser(
+  id: string,
+  userId: string,
+  isAdmin: boolean
+): Promise<EditableBlog | null> {
+  if (!ObjectId.isValid(id) || !ObjectId.isValid(userId)) return null
+
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const blogs = await db
-      .collection("blogs")
-      .find({ status: "published" })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return blogs.map(transformBlog);
+    const db = await getDatabase()
+    const doc = await collection(db).findOne({ _id: new ObjectId(id) })
+    if (!doc) return null
+    if (isAdmin) return editableBlog(doc)
+
+    const author = await db.collection<AuthorDoc>("authors").findOne({
+      _id: doc.authorId,
+      userId: new ObjectId(userId),
+    })
+
+    return author ? editableBlog(doc) : null
   } catch (error) {
-    console.error("Failed to fetch blogs:", error);
-    return [];
+    console.error("Failed to fetch editable blog:", error)
+    return null
   }
 }
 
-export async function getBlogsByAuthorId(authorId: string): Promise<Blog[]> {
+export async function getAllBlogs(): Promise<PublicBlog[]> {
   try {
-    if (!ObjectId.isValid(authorId)) return [];
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const blogs = await db
-      .collection("blogs")
-      .find({ authorId: new ObjectId(authorId), status: "published" })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return blogs.map(transformBlog);
+    const db = await getDatabase()
+    const docs = await collection(db)
+      .find(PUBLIC_POST_FILTER)
+      .project({ editorState: 0 })
+      .sort({ publishedAt: -1 })
+      .toArray()
+
+    return docs
+      .map((doc) => transformPublicBlog(doc as BlogDocument))
+      .filter((blog): blog is PublicBlog => blog !== null)
   } catch (error) {
-    console.error("Failed to fetch blogs by authorId:", error);
-    return [];
+    console.error("Failed to fetch blogs:", error)
+    return []
   }
 }
 
-export async function getBlogsByAuthorSlug(slug: string): Promise<Blog[]> {
+export async function getBlogsByAuthorId(
+  authorId: string
+): Promise<PublicBlog[]> {
+  if (!ObjectId.isValid(authorId)) return []
+
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const author = await db.collection<AuthorDoc>("authors").findOne({ slug });
-    if (!author) {
-      console.warn(`No author found for slug: ${slug}`);
-      return [];
-    }
-    const blogs = await db
-      .collection("blogs")
-      .find({ authorId: author._id, status: "published" })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return blogs.map(transformBlog);
+    const db = await getDatabase()
+    const docs = await collection(db)
+      .find({
+        ...PUBLIC_POST_FILTER,
+        authorId: new ObjectId(authorId),
+      })
+      .project({ editorState: 0 })
+      .sort({ publishedAt: -1 })
+      .toArray()
+
+    return docs
+      .map((doc) => transformPublicBlog(doc as BlogDocument))
+      .filter((blog): blog is PublicBlog => blog !== null)
   } catch (error) {
-    console.error("Failed to fetch blogs by authorSlug:", error);
-    return [];
+    console.error("Failed to fetch blogs by authorId:", error)
+    return []
+  }
+}
+
+export async function getBlogsByAuthorSlug(
+  slug: string
+): Promise<PublicBlog[]> {
+  try {
+    const db = await getDatabase()
+    const author = await db.collection<AuthorDoc>("authors").findOne({ slug })
+    if (!author) return []
+    return getBlogsByAuthorId(author._id.toString())
+  } catch (error) {
+    console.error("Failed to fetch blogs by authorSlug:", error)
+    return []
   }
 }
 
 export async function getBlogsByCategory(
   categoryName: string
-): Promise<Blog[]> {
+): Promise<PublicBlog[]> {
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const blogs = await db
-      .collection("blogs")
-      .find({ category: categoryName, status: "published" })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return blogs.map(transformBlog);
-  } catch (err) {
-    console.error("Failed to fetch blogs by category:", err);
-    return [];
+    const db = await getDatabase()
+    const docs = await collection(db)
+      .find({ ...PUBLIC_POST_FILTER, category: categoryName })
+      .project({ editorState: 0 })
+      .sort({ publishedAt: -1 })
+      .toArray()
+
+    return docs
+      .map((doc) => transformPublicBlog(doc as BlogDocument))
+      .filter((blog): blog is PublicBlog => blog !== null)
+  } catch (error) {
+    console.error("Failed to fetch blogs by category:", error)
+    return []
   }
 }
 
 export async function getNextOrOldestBlog(
-  currentBlogDate: Date
-): Promise<Blog | null> {
+  currentPublishedAt: Date
+): Promise<PublicBlog | null> {
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const nextBlog = await db
-      .collection("blogs")
-      .find({ createdAt: { $gt: currentBlogDate }, status: "published" })
-      .sort({ createdAt: 1 })
-      .limit(1)
-      .toArray();
-    if (nextBlog.length > 0) return transformBlog(nextBlog[0]);
-    const oldestBlog = await db
-      .collection("blogs")
-      .find({ createdAt: { $ne: currentBlogDate }, status: "published" })
-      .sort({ createdAt: 1 })
-      .limit(1)
-      .toArray();
-    return oldestBlog.length > 0 ? transformBlog(oldestBlog[0]) : null;
+    const db = await getDatabase()
+    const posts = collection(db)
+    const next = await posts.findOne(
+      {
+        ...PUBLIC_POST_FILTER,
+        publishedAt: { $gt: currentPublishedAt },
+      },
+      { sort: { publishedAt: 1 }, projection: { editorState: 0 } }
+    )
+
+    if (next) return transformPublicBlog(next)
+
+    const oldest = await posts.findOne(
+      {
+        ...PUBLIC_POST_FILTER,
+        publishedAt: { $ne: currentPublishedAt },
+      },
+      { sort: { publishedAt: 1 }, projection: { editorState: 0 } }
+    )
+
+    return oldest ? transformPublicBlog(oldest) : null
   } catch (error) {
-    console.error("Error fetching next or oldest blog:", error);
-    return null;
+    console.error("Error fetching next or oldest blog:", error)
+    return null
   }
+}
+
+export async function getDraftsForUser(
+  userId: string
+): Promise<DraftSummary[]> {
+  if (!ObjectId.isValid(userId)) return []
+
+  try {
+    const db = await getDatabase()
+    const author = await db.collection<AuthorDoc>("authors").findOne({
+      userId: new ObjectId(userId),
+    })
+    if (!author) return []
+
+    const docs = await collection(db)
+      .find({
+        status: "draft",
+        authorId: author._id,
+      })
+      .project({
+        title: 1,
+        editorState: 1,
+        updatedAt: 1,
+      })
+      .sort({ updatedAt: -1 })
+      .toArray()
+    const { extractPlainText } = await loadSerialization()
+
+    return docs.map((doc) => {
+      let snippet = ""
+      try {
+        snippet = extractPlainText(doc.editorState).trim().slice(0, 200)
+      } catch {
+        snippet = ""
+      }
+
+      return {
+        id: doc._id.toString(),
+        title: doc.title || "Untitled draft",
+        snippet,
+        updatedAt: new Date(doc.updatedAt).toISOString(),
+      }
+    })
+  } catch (error) {
+    console.error("Failed to fetch drafts:", error)
+    return []
+  }
+}
+
+export async function getAllBlogsForAdmin(): Promise<AdminPostSummary[]> {
+  const db = await getDatabase()
+  const docs = await collection(db)
+    .find({})
+    .project({ editorState: 0, contentHtml: 0 })
+    .sort({ updatedAt: -1 })
+    .toArray()
+  return docs.map((doc) => ({
+    id: doc._id.toString(),
+    title: doc.title,
+    author: doc.authorName,
+    category: doc.category,
+    status: doc.status,
+    createdAt: new Date(doc.createdAt).toISOString(),
+    updatedAt: new Date(doc.updatedAt).toISOString(),
+  }))
 }
 
 export async function likeBlogBySlug(slug: string): Promise<number | null> {
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const r = await db
-      .collection("blogs")
-      .findOneAndUpdate(
-        { slug },
-        { $inc: { likes: 1 } },
-        { returnDocument: "after" }
-      );
-    if (!r) {
-      console.error(`No blog found for slug: ${slug}`);
-      return null;
-    }
-    // result shape varies; transformBlog callers use transformBlog elsewhere; here return likes safe
-    return (r.value?.likes as number) ?? null;
+    const db = await getDatabase()
+    const updated = await collection(db).findOneAndUpdate(
+      { slug, status: "published" },
+      { $inc: { likes: 1 } },
+      { returnDocument: "after" }
+    )
+    return updated?.likes ?? null
   } catch (error) {
-    console.error("Failed to increment blog like count:", error);
-    return null;
+    console.error("Failed to increment blog like count:", error)
+    return null
   }
 }
 
 export async function unlikeBlogBySlug(slug: string): Promise<number | null> {
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const r = await db
-      .collection("blogs")
-      .findOneAndUpdate(
-        { slug },
-        { $inc: { likes: -1 } },
-        { returnDocument: "after" }
-      );
-    if (!r) {
-      console.error(`Blog with slug "${slug}" not found.`);
-      return null;
-    }
-    return (r.value?.likes as number) ?? null;
+    const db = await getDatabase()
+    const updated = await collection(db).findOneAndUpdate(
+      { slug, status: "published", likes: { $gt: 0 } },
+      { $inc: { likes: -1 } },
+      { returnDocument: "after" }
+    )
+    return updated?.likes ?? null
   } catch (error) {
-    console.error("Failed to decrement blog like count:", error);
-    return null;
+    console.error("Failed to decrement blog like count:", error)
+    return null
   }
 }
 
-export async function getAllBlogsForAdmin(): Promise<Blog[]> {
-  const client = await clientPromise;
-  const db = client.db(process.env.MONGODB_DB);
-  const posts = await db
-    .collection("blogs")
-    .find({})
-    .sort({ createdAt: -1 })
-    .project({
-      title: 1,
-      slug: 1,
-      author: 1,
-      category: 1,
-      status: 1,
-      createdAt: 1,
-    })
-    .toArray();
-  return posts.map(transformBlog);
-}
-
-/* -----------------------
-   CREATE blog (server-side) - returns ApiResponse<Blog>
-   ----------------------- */
-
-export async function createBlog(
-  input: {
-    title: string;
-    description: string;
-    image?: string;
-    category?: string;
-    slug?: string | undefined;
-    status?: "published" | "draft";
-  },
-  authorUserId: string
-): Promise<ApiResponse<Blog>> {
-  try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-    const now = new Date();
-
-    // find or create authorDoc by userId
-    let authorDoc = await db.collection<AuthorDoc>("authors").findOne({
-      userId: new ObjectId(authorUserId),
-    });
-
-    if (!authorDoc) {
-      const authorSlug = `author-${Date.now()}`;
-      const newAuthor: Partial<AuthorDoc> = {
-        userId: new ObjectId(authorUserId),
-        name: "Unknown Author",
-        bio: "",
-        profileImage: "/fallback.avif",
-        slug: authorSlug,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const aRes = await db.collection("authors").insertOne(newAuthor as any);
-      authorDoc = await db
-        .collection<AuthorDoc>("authors")
-        .findOne({ _id: aRes.insertedId });
-    }
-
-    if (!authorDoc) {
-      console.error("Failed to create or fetch author doc");
-      return { ok: false, error: "Author creation failed", status: 500 };
-    }
-
-    // slugify helper
-    const slugify = (s: string) =>
-      s
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "")
-        .slice(0, 200);
-
-    let finalSlug = input.slug ? slugify(input.slug) : slugify(input.title);
-
-    // ensure uniqueness
-    let suffix = 0;
-    let candidate = finalSlug;
-    while (await db.collection("blogs").findOne({ slug: candidate })) {
-      suffix += 1;
-      candidate = `${finalSlug}-${suffix}`;
-    }
-    finalSlug = candidate;
-
-    const blogDoc: BlogInsert = {
-      title: input.title,
-      description: input.description,
-      image: input.image || "/fallback.avif",
-      category: input.category || "Uncategorized",
-      slug: finalSlug,
-      likes: 0,
-      status: input.status || "draft",
-      createdAt: now,
-      updatedAt: now,
-      authorId: authorDoc._id,
-      authorName: authorDoc.name ?? "",
-      authorSlug: authorDoc.slug ?? null,
-    };
-
-    const insertResult = await db.collection("blogs").insertOne(blogDoc as any);
-    const created = await db
-      .collection("blogs")
-      .findOne({ _id: insertResult.insertedId });
-    if (!created) return { ok: false, error: "Create failed", status: 500 };
-
-    const blog = transformBlog(created);
-    return { ok: true, data: blog, status: 201 };
-  } catch (err: any) {
-    console.error("createBlog error:", err);
-    return { ok: false, error: "Internal Server Error", status: 500 };
-  }
-}
-
-/* -----------------------
-   UPDATE blog (server-side) - returns ApiResponse<Blog>
-   with optional ownership enforcement
-   ----------------------- */
-
-/**
- * updateBlog
- * - blogId: string (ObjectId)
- * - updatesRaw: partial fields to set
- * - authorUserId?: string  — if provided, ownership check is enforced
- *
- * Returns ApiResponse<Blog> with status codes:
- * - 200: updated
- * - 403: forbidden (ownership failed)
- * - 404: not found
- * - 400/500: other errors
- */
-// inside lib/blogService.server.ts (replace existing updateBlog)
-export async function updateBlog(
-  blogId: string,
-  updatesRaw: {
-    title?: string;
-    description?: string;
-    image?: string;
-    category?: string;
-    status?: "published" | "draft";
-    slug?: string;
-  },
-  authorUserId?: string
-): Promise<ApiResponse<Blog>> {
-  if (!ObjectId.isValid(blogId)) {
-    console.error("Invalid blog id for update:", blogId);
-    return { ok: false, error: "Invalid blog id", status: 400 };
-  }
-
-  try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-
-    // fetch existing blog
-    const existing = await db
-      .collection("blogs")
-      .findOne({ _id: new ObjectId(blogId) });
-
-    // If the blog is missing, treat this as "blog was deleted".
-    // We'll create a brand new blog instead of returning 404.
-    if (!existing) {
-      console.warn(
-        "Blog to update not found (may have been deleted). Creating a new blog instead:",
-        blogId
-      );
-
-      // Ensure minimal required fields exist to create a blog.
-      // If client didn't supply title/description, fail with 400.
-      if (!updatesRaw.title || !updatesRaw.description) {
-        return {
-          ok: false,
-          error:
-            "Cannot create blog: title and description are required when original blog is missing.",
-          status: 400,
-        };
-      }
-
-      // Delegate to createBlog for consistent creation logic (author linking, slug uniqueness, etc.)
-      // createBlog returns Blog | null in this file — handle accordingly.
-      const created = await createBlog(
-        {
-          title: updatesRaw.title,
-          description: updatesRaw.description,
-          image: updatesRaw.image,
-          category: updatesRaw.category,
-          slug: updatesRaw.slug,
-          status: updatesRaw.status ?? "draft",
-        },
-        // if authorUserId present, pass it; else creation will create "Unknown Author" fallback
-        authorUserId ?? ""
-      );
-
-      if (!created) {
-        return {
-          ok: false,
-          error: "Failed to create fallback blog when original was missing.",
-          status: 500,
-        };
-      }
-
-      // Important: caller (e.g., draft publish flow) should remove blogId link from the draft.
-      return { ok: true, data: transformBlog(created), status: 201 };
-    }
-
-    // Optional ownership enforcement:
-    if (authorUserId) {
-      const authorDoc = await db.collection<AuthorDoc>("authors").findOne({
-        userId: new ObjectId(authorUserId),
-      });
-      if (!authorDoc) {
-        console.warn("Author doc not found for user:", authorUserId);
-        return { ok: false, error: "Author not found", status: 404 };
-      }
-
-      // existing.authorId may be ObjectId or string — normalize both sides
-      const existingAuthorId =
-        existing.authorId && existing.authorId.toString
-          ? existing.authorId.toString()
-          : String(existing.authorId);
-      if (existingAuthorId !== authorDoc._id.toString()) {
-        console.warn("Ownership check failed for update:", blogId);
-        return { ok: false, error: "Forbidden: not the owner", status: 403 };
-      }
-    }
-
-    const updates: any = { updatedAt: new Date() };
-
-    // slug generation/uniqueness if provided
-    const slugify = (s: string) =>
-      s
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "")
-        .slice(0, 200);
-
-    if (typeof updatesRaw.slug === "string" && updatesRaw.slug.trim()) {
-      let finalSlug = slugify(updatesRaw.slug);
-      let suffix = 0;
-      let candidate = finalSlug;
-      while (
-        await db.collection("blogs").findOne({
-          slug: candidate,
-          _id: { $ne: new ObjectId(blogId) },
-        })
-      ) {
-        suffix += 1;
-        candidate = `${finalSlug}-${suffix}`;
-      }
-      updates.slug = candidate;
-    }
-
-    if (typeof updatesRaw.title === "string") updates.title = updatesRaw.title;
-    if (typeof updatesRaw.description === "string")
-      updates.description = updatesRaw.description;
-    if (typeof updatesRaw.image === "string")
-      updates.image = updatesRaw.image || "/fallback.avif";
-    if (typeof updatesRaw.category === "string")
-      updates.category = updatesRaw.category || "Uncategorized";
-    if (typeof updatesRaw.status === "string")
-      updates.status = updatesRaw.status;
-
-    // if nothing to update besides updatedAt => return existing (no-op)
-    const keys = Object.keys(updates).filter((k) => k !== "updatedAt");
-    if (keys.length === 0) {
-      return { ok: true, data: transformBlog(existing), status: 200 };
-    }
-
-    const result = await db
-      .collection("blogs")
-      .findOneAndUpdate(
-        { _id: new ObjectId(blogId) },
-        { $set: updates },
-        { returnDocument: "after" }
-      );
-
-    if (!result) {
-      console.warn("Failed to update blog:", blogId);
-      return { ok: false, error: "Failed to update blog", status: 500 };
-    }
-
-    return { ok: true, data: transformBlog(result), status: 200 };
-  } catch (err: any) {
-    console.error("updateBlog error:", err);
-    return { ok: false, error: "Internal Server Error", status: 500 };
-  }
-}
-
-/* -----------------------
-   DELETE blog (server-side)
-   - If authorUserId provided: enforces ownership (authors can only delete their own)
-   - If authorUserId omitted: admin bypass, no ownership check
-   ----------------------- */
 export async function deleteBlog(
   blogId: string,
   authorUserId?: string
 ): Promise<ApiResponse<null>> {
   if (!ObjectId.isValid(blogId)) {
-    return { ok: false, error: "Invalid blog id", status: 400 };
+    return { ok: false, error: "Invalid blog id", status: 400 }
   }
 
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
-
-    const existing = await db
-      .collection("blogs")
-      .findOne({ _id: new ObjectId(blogId) });
-
+    const db = await getDatabase()
+    const posts = collection(db)
+    const _id = new ObjectId(blogId)
+    const existing = await posts.findOne({ _id })
     if (!existing) {
-      return { ok: false, error: "Blog not found", status: 404 };
+      return { ok: false, error: "Post not found", status: 404 }
     }
 
-    // Ownership check (skip for admin)
     if (authorUserId) {
-      const authorDoc = await db
-        .collection<AuthorDoc>("authors")
-        .findOne({ userId: new ObjectId(authorUserId) });
-
-      if (!authorDoc) {
-        return { ok: false, error: "Author not found", status: 404 };
+      if (!ObjectId.isValid(authorUserId)) {
+        return { ok: false, error: "Invalid author user ID", status: 400 }
       }
 
-      const existingAuthorId = existing.authorId?.toString?.() ?? "";
-      if (existingAuthorId !== authorDoc._id.toString()) {
-        return { ok: false, error: "Forbidden: not the owner", status: 403 };
+      const author = await db.collection<AuthorDoc>("authors").findOne({
+        userId: new ObjectId(authorUserId),
+      })
+      if (!author || existing.authorId.toString() !== author._id.toString()) {
+        return { ok: false, error: "Forbidden: not the owner", status: 403 }
       }
     }
 
-    await db.collection("blogs").deleteOne({ _id: new ObjectId(blogId) });
-
-    return { ok: true, data: null, status: 200 };
-  } catch (err: any) {
-    console.error("deleteBlog error:", err);
-    return { ok: false, error: "Internal Server Error", status: 500 };
+    await posts.deleteOne({ _id })
+    return { ok: true, data: null, status: 200 }
+  } catch (error) {
+    return serviceError(error)
   }
 }

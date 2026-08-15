@@ -1,4 +1,4 @@
-import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode"
+import { INSERT_HORIZONTAL_RULE_COMMAND } from "@/components/editor/nodes/horizontal-rule-node"
 import { MinusIcon } from "lucide-react"
 
 import { ComponentPickerOption } from "@/components/editor/plugins/picker/component-picker-option"

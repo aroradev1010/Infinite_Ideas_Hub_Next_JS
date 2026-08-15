@@ -1,87 +1,97 @@
-// components/DraftsList.tsx
-"use client";
+"use client"
 
-import React, { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"
+import { useCallback, useState } from "react"
+import { toast } from "sonner"
 
-type DraftRow = {
-    id: string;
-    title: string;
-    snippet?: string;
-    blogId?: string | null;
-    updatedAt?: string;
-};
+import { deleteBlog } from "@/lib/blogService.client"
+import type { DraftSummary } from "@/types/blogType"
 
-export default function DraftsList({ initialDrafts }: { initialDrafts: DraftRow[] }) {
-    const [drafts, setDrafts] = useState(initialDrafts || []);
-    const router = useRouter();
+interface DraftsListProps {
+  initialDrafts: DraftSummary[]
+}
 
-    // Edit -> go to draft editor page
-    const handleEdit = useCallback(
-        (d: DraftRow) => {
-            router.push(`/dashboard/drafts/${encodeURIComponent(d.id)}`);
+export default function DraftsList({ initialDrafts }: DraftsListProps) {
+  const [drafts, setDrafts] = useState(initialDrafts)
+  const router = useRouter()
+
+  const handleDelete = useCallback((draft: DraftSummary) => {
+    const toastId = toast("Delete draft?", {
+      description: "This will permanently remove this draft.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const result = await deleteBlog(draft.id)
+            if (!result.ok) {
+              throw new Error(result.error || "Delete failed")
+            }
+
+            setDrafts((current) =>
+              current.filter((item) => item.id !== draft.id)
+            )
+            toast.success("Draft deleted.")
+          } catch (error) {
+            console.error("Delete draft error:", error)
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Failed to delete draft."
+            )
+          } finally {
+            toast.dismiss(toastId)
+          }
         },
-        [router]
-    );
+      },
+    })
+  }, [])
 
-    // Delete -> delete the server draft by draftId
-    const handleDelete = useCallback(
-        async (d: DraftRow) => {
-            const id = d.id;
-            const t = toast("Delete draft?", {
-                description: "This will remove the server copy of the draft.",
-                action: {
-                    label: "Delete",
-                    onClick: async () => {
-                        try {
-                            const res = await fetch(`/api/drafts?draftId=${encodeURIComponent(id)}`, {
-                                method: "DELETE",
-                            });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data?.error || "Delete failed");
-                            setDrafts((prev) => prev.filter((x) => x.id !== id));
-                            toast.success("Draft deleted.");
-                        } catch (err) {
-                            console.error("Delete draft error:", err);
-                            const errorMessage = err instanceof Error ? err.message : "Failed to delete draft.";
-                            toast.error(errorMessage);
-                        } finally {
-                            toast.dismiss(t);
-                        }
-                    },
-                },
-            });
-        },
-        []
-    );
-
-    if (!drafts || drafts.length === 0) {
-        return <div className="p-6 bg-white rounded shadow text-gray-400">No drafts found.</div>;
-    }
-
+  if (drafts.length === 0) {
     return (
-        <div className="space-y-4">
-            {drafts.map((d) => (
-                <div key={d.id} className="p-4 border rounded bg-gray-900">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="text-lg font-semibold">{d.title || "Untitled draft"}</h3>
-                            <p className="text-sm text-gray-400">{d.snippet || ""}</p>
-                            <p className="text-xs text-gray-500 mt-2">Saved: {d.updatedAt ? new Date(d.updatedAt).toLocaleString() : "-"}</p>
-                        </div>
+      <div className="rounded bg-white p-6 text-gray-400 shadow">
+        No drafts found.
+      </div>
+    )
+  }
 
-                        <div className="flex flex-col gap-2">
-                            <button onClick={() => handleEdit(d)} className="bg-green-600 px-3 py-1 rounded text-sm">
-                                Edit
-                            </button>
-                            <button onClick={() => handleDelete(d)} className="bg-red-600 px-3 py-1 rounded text-sm">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ))}
+  return (
+    <div className="space-y-4">
+      {drafts.map((draft) => (
+        <div key={draft.id} className="rounded border bg-gray-900 p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">
+                {draft.title || "Untitled draft"}
+              </h3>
+              <p className="text-sm text-gray-400">{draft.snippet}</p>
+              <p className="mt-2 text-xs text-gray-500">
+                Saved: {new Date(draft.updatedAt).toLocaleString()}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/dashboard/drafts/${encodeURIComponent(draft.id)}`
+                  )
+                }
+                className="rounded bg-green-600 px-3 py-1 text-sm"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(draft)}
+                className="rounded bg-red-600 px-3 py-1 text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
-    );
+      ))}
+    </div>
+  )
 }

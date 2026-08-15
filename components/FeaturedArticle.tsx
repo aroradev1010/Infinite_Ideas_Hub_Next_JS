@@ -1,9 +1,9 @@
 // components/FeaturedArticle.tsx
 import BlogCard from "./BlogCard";
-import { Blog } from "@/types/blogType";
+import type { PublicBlog } from "@/types/blogType";
 
 interface Props {
-  blog: Blog;
+  blog: PublicBlog;
 }
 
 export default function FeaturedArticle({ blog }: Props) {

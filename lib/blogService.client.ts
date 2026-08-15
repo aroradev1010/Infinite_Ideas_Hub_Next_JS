@@ -1,109 +1,105 @@
-// lib/blogService.client.ts
-/**
- * Client-side wrapper around /api/blog endpoints.
- * Use this ONLY in client components or hooks.
- */
+import type { BlogInput, EditableBlog } from "@/types/blogType"
+import type { ApiResponse } from "@/types/db"
 
-import type { Blog, BlogInput } from "@/types/blogType";
-import type { ApiResponse } from "@/types/db";
+interface ErrorBody {
+  error?: string
+}
 
-/**
- * Utility: Safely parse JSON body from a fetch Response.
- * Avoids runtime errors when response is empty or malformed.
- */
-async function safeJson<T = any>(res: Response): Promise<T | {}> {
-  const text = await res.text();
+async function safeJson(response: Response): Promise<unknown> {
+  const body = await response.text()
+  if (!body) return {}
+
   try {
-    return text ? JSON.parse(text) : {};
+    return JSON.parse(body)
   } catch {
-    return {};
+    return {}
   }
 }
 
-/* ------------------------------------------------------
-   CREATE blog
-   ------------------------------------------------------ */
-export async function createBlog(body: BlogInput): Promise<ApiResponse<Blog>> {
+function messageFrom(value: unknown, fallback: string): string {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "error" in value &&
+    typeof (value as ErrorBody).error === "string"
+  ) {
+    return (value as ErrorBody).error ?? fallback
+  }
+
+  return fallback
+}
+
+function networkError(error: unknown): ApiResponse<never> {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : "Network error",
+  }
+}
+
+async function writeBlog(
+  url: string,
+  method: "POST" | "PATCH",
+  body: BlogInput
+): Promise<ApiResponse<EditableBlog>> {
   try {
-    const res = await fetch("/api/blog", {
-      method: "POST",
+    const response = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    });
+    })
+    const parsed = await safeJson(response)
 
-    const parsed = (await safeJson(res)) as ApiResponse<
-      Partial<Blog> & { blog?: Blog; data?: Blog; error?: string }
-    >;
-
-    if (!res.ok) {
+    if (!response.ok) {
       return {
         ok: false,
-        status: res.status,
-        error: parsed?.error || "Failed to create blog",
-      };
+        status: response.status,
+        error: messageFrom(parsed, "Failed to save post"),
+      }
     }
 
-    return {
-      ok: true,
-      status: res.status,
-      // prefer parsed.data, fallback to parsed.blog, otherwise undefined (not null)
-      data: (parsed?.data as Blog) ?? (parsed?.blog as Blog) ?? undefined,
-    };
-  } catch (err: any) {
-    return { ok: false, error: err?.message || "Network error" };
+    return parsed as ApiResponse<EditableBlog>
+  } catch (error) {
+    return networkError(error)
   }
 }
 
-/* ------------------------------------------------------
-   UPDATE blog
-   ------------------------------------------------------ */
-export async function updateBlog(
+export function createBlog(
+  body: BlogInput
+): Promise<ApiResponse<EditableBlog>> {
+  return writeBlog("/api/blog", "POST", body)
+}
+
+export function updateBlog(
   blogId: string,
   body: BlogInput
-): Promise<ApiResponse<Blog>> {
-  try {
-    const res = await fetch(`/api/blog?id=${encodeURIComponent(blogId)}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    const parsed = (await safeJson(res)) as ApiResponse<
-      Partial<Blog> & { blog?: Blog; data?: Blog; error?: string }
-    >;
-
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: res.status,
-        error: parsed?.error || "Failed to update blog",
-      };
-    }
-
-    return {
-      ok: true,
-      status: res.status,
-      data: (parsed?.data as Blog) ?? (parsed?.blog as Blog) ?? undefined,
-    };
-  } catch (err: any) {
-    return { ok: false, error: err?.message || "Network error" };
-  }
+): Promise<ApiResponse<EditableBlog>> {
+  return writeBlog(
+    `/api/blog?id=${encodeURIComponent(blogId)}`,
+    "PATCH",
+    body
+  )
 }
 
-/* ------------------------------------------------------
-   DELETE blog
-   ------------------------------------------------------ */
-export async function deleteBlog(blogId: string): Promise<ApiResponse<null>> {
+export async function deleteBlog(
+  blogId: string
+): Promise<ApiResponse<null>> {
   try {
-    const res = await fetch(`/api/blog?id=${encodeURIComponent(blogId)}`, {
-      method: "DELETE",
-    });
-    const parsed = (await safeJson(res)) as { ok?: boolean; error?: string };
-    if (!res.ok) {
-      return { ok: false, status: res.status, error: parsed?.error || "Failed to delete blog" };
+    const response = await fetch(
+      `/api/blog?id=${encodeURIComponent(blogId)}`,
+      { method: "DELETE" }
+    )
+    const parsed = await safeJson(response)
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: messageFrom(parsed, "Failed to delete post"),
+      }
     }
-    return { ok: true, status: res.status, data: null };
-  } catch (err: any) {
-    return { ok: false, error: err?.message || "Network error" };
+
+    return { ok: true, status: response.status, data: null }
+  } catch (error) {
+    return networkError(error)
   }
 }

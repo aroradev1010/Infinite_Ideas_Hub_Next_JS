@@ -1,52 +1,77 @@
-"use client";
-import React, { useState } from "react";
+"use client"
 
-type PostRow = {
-  id: string;
-  title: string;
-  author?: string;
-  category?: string;
-  status?: string;
-  createdAt?: string;
-};
+import { useState } from "react"
 
-export default function AdminPostsTable({ initialPosts }: { initialPosts: PostRow[] }) {
-  const [posts, setPosts] = useState<PostRow[]>(initialPosts);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+import type {
+  AdminPostSummary,
+  BlogStatus,
+} from "@/types/blogType"
 
-  async function handleAction(id: string, action: "publish" | "unpublish" | "delete") {
-    setLoadingId(id);
+interface AdminPostsTableProps {
+  initialPosts: AdminPostSummary[]
+}
+
+interface AdminActionResponse {
+  ok?: boolean
+  error?: string
+  data?: {
+    id: string
+    status?: BlogStatus
+  }
+}
+
+export default function AdminPostsTable({
+  initialPosts,
+}: AdminPostsTableProps) {
+  const [posts, setPosts] = useState(initialPosts)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+
+  async function handleAction(
+    id: string,
+    action: "publish" | "unpublish" | "delete"
+  ) {
+    setLoadingId(id)
     try {
-      const res = await fetch("/api/admin/posts", {
+      const response = await fetch("/api/admin/posts", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, action }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Action failed");
+      })
+      const result = (await response.json()) as AdminActionResponse
+      if (!response.ok) {
+        throw new Error(result.error || "Action failed")
+      }
 
       if (action === "delete") {
-        setPosts((prev) => prev.filter((p) => p.id !== id));
-      } else {
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === id ? { ...p, status: data.status || (action === "publish" ? "published" : "draft") } : p
-          )
-        );
+        setPosts((current) => current.filter((post) => post.id !== id))
+        return
       }
-    } catch (err: any) {
-      alert(err.message || "Failed to perform action");
+
+      const status =
+        result.data?.status ??
+        (action === "publish" ? "published" : "draft")
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === id ? { ...post, status } : post
+        )
+      )
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Failed to perform action"
+      )
     } finally {
-      setLoadingId(null);
+      setLoadingId(null)
     }
   }
 
   if (posts.length === 0) {
-    return <div className="p-6 bg-white rounded shadow">No posts found.</div>;
+    return (
+      <div className="rounded bg-white p-6 shadow">No posts found.</div>
+    )
   }
 
   return (
-    <div className="overflow-x-auto bg-black rounded shadow">
+    <div className="overflow-x-auto rounded bg-black shadow">
       <table className="min-w-full text-left">
         <thead className="bg-black text-gray-400">
           <tr>
@@ -59,40 +84,45 @@ export default function AdminPostsTable({ initialPosts }: { initialPosts: PostRo
           </tr>
         </thead>
         <tbody>
-          {posts.map((p) => (
-            <tr key={p.id} className="border-t">
-              <td className="p-3">{p.title}</td>
-              <td className="p-3">{p.author}</td>
-              <td className="p-3">{p.category}</td>
-              <td className="p-3 capitalize">{p.status}</td>
-              <td className="p-3">{p.createdAt ? new Date(p.createdAt).toLocaleString() : "-"}</td>
-              <td className="p-3 space-x-2">
-                {p.status !== "published" ? (
+          {posts.map((post) => (
+            <tr key={post.id} className="border-t">
+              <td className="p-3">{post.title}</td>
+              <td className="p-3">{post.author}</td>
+              <td className="p-3">{post.category}</td>
+              <td className="p-3 capitalize">{post.status}</td>
+              <td className="p-3">
+                {new Date(post.createdAt).toLocaleString()}
+              </td>
+              <td className="space-x-2 p-3">
+                {post.status !== "published" ? (
                   <button
-                    onClick={() => handleAction(p.id, "publish")}
-                    disabled={loadingId === p.id}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                    type="button"
+                    onClick={() => handleAction(post.id, "publish")}
+                    disabled={loadingId === post.id}
+                    className="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700"
                   >
-                    {loadingId === p.id ? "..." : "Publish"}
+                    {loadingId === post.id ? "..." : "Publish"}
                   </button>
                 ) : (
                   <button
-                    onClick={() => handleAction(p.id, "unpublish")}
-                    disabled={loadingId === p.id}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded"
+                    type="button"
+                    onClick={() => handleAction(post.id, "unpublish")}
+                    disabled={loadingId === post.id}
+                    className="rounded bg-yellow-600 px-3 py-1 text-white hover:bg-yellow-700"
                   >
-                    {loadingId === p.id ? "..." : "Unpublish"}
+                    {loadingId === post.id ? "..." : "Unpublish"}
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => {
-                    if (!confirm("Delete this post permanently?")) return;
-                    handleAction(p.id, "delete");
+                    if (!window.confirm("Delete this post permanently?")) return
+                    void handleAction(post.id, "delete")
                   }}
-                  disabled={loadingId === p.id}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                  disabled={loadingId === post.id}
+                  className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
                 >
-                  {loadingId === p.id ? "..." : "Delete"}
+                  {loadingId === post.id ? "..." : "Delete"}
                 </button>
               </td>
             </tr>
@@ -100,5 +130,5 @@ export default function AdminPostsTable({ initialPosts }: { initialPosts: PostRo
         </tbody>
       </table>
     </div>
-  );
+  )
 }
