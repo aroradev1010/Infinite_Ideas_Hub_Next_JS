@@ -1,4 +1,5 @@
 import AdminPostsTable from "@/components/admin/AdminPostsTable"
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
 import { getAllBlogsForAdmin } from "@/lib/blogService.server"
 import { requireRolePage } from "@/lib/requireRole"
 
@@ -8,7 +9,12 @@ export default async function AdminPostsPage() {
 
   return (
     <section>
-      <h1 className="mb-6 text-2xl font-bold">Manage Posts</h1>
+      <DashboardPageHeader
+        className="mb-8"
+        eyebrow="Content"
+        title="Posts"
+        description="Manage publishing status across all authors."
+      />
       <AdminPostsTable initialPosts={posts} />
     </section>
   )

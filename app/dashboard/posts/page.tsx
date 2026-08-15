@@ -1,12 +1,11 @@
 import Link from "next/link"
-import { Plus } from "lucide-react"
 
 import DashboardBlogsTable from "@/components/dashboard/DashboardBlogsTable"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAuthorByUserId } from "@/lib/authorService"
 import { getDashboardPostsByAuthorId } from "@/lib/blogService.server"
 import { requireRolePage } from "@/lib/requireRole"
+import PrimaryButton from "@/components/PrimaryButton"
 
 export default async function DashboardPostsPage() {
   const session = await requireRolePage(["author", "admin"])
@@ -58,15 +57,12 @@ export default async function DashboardPostsPage() {
             Search, edit, and manage your published work and drafts.
           </p>
         </div>
-        <Button
-          asChild
-          className="w-full bg-cyan-400 font-extrabold text-slate-950 shadow-lg shadow-cyan-950/20 hover:bg-cyan-300 sm:w-auto"
-        >
-          <Link href="/dashboard/create">
-            <Plus aria-hidden="true" />
-            New Post
-          </Link>
-        </Button>
+        <Link href="/dashboard/create">
+          <PrimaryButton
+            text="+ New Blog"
+            className="w-fullfont-extrabold text-slate-950 shadow-lg sm:w-auto"
+          />
+        </Link>
       </header>
 
       <DashboardBlogsTable initialPosts={posts} />

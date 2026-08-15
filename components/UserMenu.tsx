@@ -45,8 +45,7 @@ const adminItems: MenuItem[] = [
   { href: "/dashboard/create", icon: NotebookPen, label: "Create Post" },
   { href: "/admin/posts", icon: FileText, label: "Manage Posts" },
   { href: "/admin/authors", icon: CircleUserRound, label: "Manage Authors" },
-  { href: "/categories", icon: FolderTree, label: "Categories" },
-  { href: "/admin/users", icon: Users, label: "Users" },
+  { href: "/admin/users", icon: Users, label: "Manage Users" },
 ];
 
 const itemsByRole: Record<string, MenuItem[]> = {
@@ -97,7 +96,7 @@ export function UserMenu({ onOpen, user }: UserMenuProps) {
         <button
           type="button"
           aria-label="Open account menu"
-          className="group flex items-center gap-1 rounded-full border border-cyan-400/30 bg-zinc-950/80 p-1 pr-2 text-gray-300 shadow-sm transition hover:border-primary/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+          className="group flex items-center gap-1 rounded-full bg-zinc-950/80 p-1 pr-2 text-gray-300 shadow-sm transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
         >
           <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-cyan-400 text-sm font-extrabold text-white">
             {user.image ? (

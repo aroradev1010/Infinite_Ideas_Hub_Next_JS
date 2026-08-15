@@ -4,6 +4,21 @@ export const BLOG_CATEGORIES = [
     slug: "backend",
     image: "/categories/backend.webp",
   },
+  {
+    name: "DevOps",
+    slug: "devops",
+    image: "/categories/devops.jpeg",
+  },
+  {
+    name: "Cybersecurity",
+    slug: "cybersecurity",
+    image: "/categories/cybersecurity.jpg",
+  },
+  {
+    name: "Machine Learning",
+    slug: "machine-learning",
+    image: "/categories/machine-learning.jpg",
+  },
 ] as const
 
 export const DEFAULT_BLOG_CATEGORY = BLOG_CATEGORIES[0].name

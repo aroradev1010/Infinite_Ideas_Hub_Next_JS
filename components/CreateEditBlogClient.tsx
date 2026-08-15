@@ -7,6 +7,17 @@ import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import BlogPreviewDialog from "@/components/blog/BlogPreviewDialog"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   BLOG_CATEGORIES,
   DEFAULT_BLOG_CATEGORY,
@@ -16,6 +27,7 @@ import {
 import { generateBlogPreview } from "@/lib/blogPreview.client"
 import { createBlog, updateBlog } from "@/lib/blogService.client"
 import { createEmptySerializedEditorState } from "@/lib/editor/state"
+import { cn } from "@/lib/utils"
 import type {
   BlogInput,
   BlogArticleData,
@@ -31,6 +43,7 @@ const BlogEditor = dynamic(() => import("./editor/BlogEditor"), {
 interface CreateEditBlogClientProps {
   currentAuthor: BlogPreviewAuthor
   initialBlog?: EditableBlog | null
+  presentation?: "default" | "dashboard-create"
 }
 
 function errorMessage(error: unknown, fallback: string): string {
@@ -40,6 +53,7 @@ function errorMessage(error: unknown, fallback: string): string {
 export default function CreateEditBlogClient({
   currentAuthor,
   initialBlog,
+  presentation = "default",
 }: CreateEditBlogClientProps) {
   const router = useRouter()
   const [blogId, setBlogId] = useState(initialBlog?.id ?? null)
@@ -190,100 +204,255 @@ export default function CreateEditBlogClient({
   }, [category, currentAuthor, image, initialBlog, title])
 
   const isPublishedBlog = initialBlog?.status === "published"
+  const isDashboardCreate = presentation === "dashboard-create"
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="space-y-2">
-        <input
-          aria-label="Post title"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Post title"
-          className="w-full border-b bg-transparent p-2 text-3xl font-extrabold focus:outline-none"
-        />
+    <div
+      className={cn(
+        "mx-auto max-w-4xl space-y-6",
+        isDashboardCreate && "max-w-none space-y-8"
+      )}
+    >
+      {isDashboardCreate ? (
+        <Card className="border-white/[0.08] bg-card/20 shadow-none">
+          <CardContent className="space-y-6 p-5 sm:p-6">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(14rem,1fr)]">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="create-blog-title"
+                  className="font-extrabold text-gray-300"
+                >
+                  Post Title
+                </Label>
+                <Input
+                  id="create-blog-title"
+                  aria-label="Post title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Enter an engaging title for your post..."
+                  className="h-12 border-white/10 bg-white/[0.03] px-4 text-base font-bold text-white shadow-none placeholder:font-normal placeholder:text-gray-600 focus-visible:border-cyan-400/40 focus-visible:ring-cyan-400/20"
+                />
+              </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <select
-            aria-label="Post category"
-            value={category}
-            onChange={(event) => {
-              if (isBlogCategory(event.target.value)) {
-                setCategory(event.target.value)
-              }
-            }}
-            className="rounded border bg-black p-2"
-          >
-            {BLOG_CATEGORIES.map((item) => (
-              <option key={item.slug} value={item.name}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="create-blog-category"
+                  className="font-extrabold text-gray-300"
+                >
+                  Category
+                </Label>
+                <Select
+                  value={category}
+                  onValueChange={(value) => {
+                    if (isBlogCategory(value)) {
+                      setCategory(value)
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id="create-blog-category"
+                    aria-label="Post category"
+                    className="w-full border-white/10 bg-white/[0.03] px-4 font-bold text-gray-200 shadow-none focus-visible:border-cyan-400/40 focus-visible:ring-cyan-400/20 data-[size=default]:h-12"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-white/10 bg-[#11161d] text-gray-200">
+                    {BLOG_CATEGORIES.map((item) => (
+                      <SelectItem key={item.slug} value={item.name}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
+            <div className="space-y-2">
+              <Label
+                htmlFor="create-blog-thumbnail"
+                className="font-extrabold text-gray-300"
+              >
+                Thumbnail Image URL (optional)
+              </Label>
+              <Input
+                id="create-blog-thumbnail"
+                aria-label="Thumbnail image URL"
+                value={image}
+                onChange={(event) => setImage(event.target.value)}
+                placeholder="Paste a direct image URL to use as the thumbnail..."
+                className="h-12 border-white/10 bg-white/[0.03] px-4 text-white shadow-none placeholder:text-gray-600 focus-visible:border-cyan-400/40 focus-visible:ring-cyan-400/20"
+              />
+              <p className="text-xs leading-5 text-gray-600">
+                The image will be previewed here before you publish.
+              </p>
+            </div>
+
+            {image ? (
+              <div className="overflow-hidden rounded-lg border border-white/[0.08] bg-black/20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image}
+                  alt="Thumbnail preview"
+                  className="max-h-64 w-full object-cover"
+                />
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
           <input
-            aria-label="Thumbnail image URL"
-            value={image}
-            onChange={(event) => setImage(event.target.value)}
-            placeholder="Thumbnail image URL (optional)"
-            className="flex-1 rounded border bg-black p-2"
+            aria-label="Post title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Post title"
+            className="w-full border-b bg-transparent p-2 text-3xl font-extrabold focus:outline-none"
           />
-        </div>
 
-        {image ? (
-          <div className="mt-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={image}
-              alt="Thumbnail preview"
-              className="max-h-56 w-full rounded object-cover"
+          <div className="flex flex-wrap items-center gap-4">
+            <select
+              aria-label="Post category"
+              value={category}
+              onChange={(event) => {
+                if (isBlogCategory(event.target.value)) {
+                  setCategory(event.target.value)
+                }
+              }}
+              className="rounded border bg-black p-2"
+            >
+              {BLOG_CATEGORIES.map((item) => (
+                <option key={item.slug} value={item.name}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              aria-label="Thumbnail image URL"
+              value={image}
+              onChange={(event) => setImage(event.target.value)}
+              placeholder="Thumbnail image URL (optional)"
+              className="flex-1 rounded border bg-black p-2"
             />
           </div>
-        ) : null}
-      </div>
 
-      <BlogEditor
-        initialEditorState={editorStateRef.current}
-        onUpdate={handleEditorUpdate}
-      />
+          {image ? (
+            <div className="mt-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image}
+                alt="Thumbnail preview"
+                className="max-h-56 w-full rounded object-cover"
+              />
+            </div>
+          ) : null}
+        </div>
+      )}
 
-      <div className="flex items-center justify-end gap-3">
-        {isPublishedBlog ? (
-          <p className="mr-auto text-xs text-yellow-500">
-            Saving as a draft will unpublish this blog while preserving its ID.
-          </p>
-        ) : null}
+      {isDashboardCreate ? (
+        <section aria-labelledby="create-blog-content" className="space-y-3">
+          <h2
+            id="create-blog-content"
+            className="text-sm font-extrabold text-gray-300"
+          >
+            Content
+          </h2>
+          <BlogEditor
+            initialEditorState={editorStateRef.current}
+            onUpdate={handleEditorUpdate}
+            className="border-0 bg-transparent p-0"
+          />
+        </section>
+      ) : (
+        <BlogEditor
+          initialEditorState={editorStateRef.current}
+          onUpdate={handleEditorUpdate}
+        />
+      )}
 
-        <button
-          type="button"
-          disabled={isPreviewLoading || isSaving}
-          onClick={handlePreview}
-          className="rounded border border-gray-600 px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
-        >
-          {isPreviewLoading ? "Generating preview..." : "Preview"}
-        </button>
+      {isDashboardCreate ? (
+        <div className="flex flex-col gap-4 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center sm:justify-end">
+          {isPublishedBlog ? (
+            <p className="text-xs text-yellow-500 sm:mr-auto">
+              Saving as a draft will unpublish this blog while preserving its ID.
+            </p>
+          ) : null}
 
-        <button
-          type="button"
-          disabled={isSaving}
-          onClick={handleSaveDraft}
-          className="rounded bg-gray-700 px-4 py-2 text-white hover:bg-gray-600 disabled:opacity-50"
-        >
-          {isSaving
-            ? "Saving..."
-            : isPublishedBlog
-              ? "Unpublish & Save Draft"
-              : "Save Draft"}
-        </button>
+          <div className="grid w-full gap-3 sm:flex sm:w-auto sm:items-center">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPreviewLoading || isSaving}
+              onClick={handlePreview}
+              className="h-10 w-full border-white/10 bg-white/[0.02] px-5 font-bold text-gray-300 shadow-none hover:bg-white/[0.06] hover:text-white sm:w-auto"
+            >
+              {isPreviewLoading ? "Generating preview..." : "Preview"}
+            </Button>
 
-        <button
-          type="button"
-          disabled={isSaving}
-          onClick={handlePublish}
-          className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
-        >
-          {isSaving ? "Saving..." : blogId ? "Update & Publish" : "Publish"}
-        </button>
-      </div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isSaving}
+              onClick={handleSaveDraft}
+              className="h-10 w-full bg-slate-800 px-5 font-bold text-slate-100 shadow-none hover:bg-slate-700 sm:w-auto"
+            >
+              {isSaving
+                ? "Saving..."
+                : isPublishedBlog
+                  ? "Unpublish & Save Draft"
+                  : "Save Draft"}
+            </Button>
+
+            <Button
+              type="button"
+              disabled={isSaving}
+              onClick={handlePublish}
+              className="h-10 w-full bg-emerald-500 px-5 font-extrabold text-slate-950 shadow-none hover:bg-emerald-400 focus-visible:ring-emerald-400/30 sm:w-auto"
+            >
+              {isSaving ? "Saving..." : blogId ? "Update & Publish" : "Publish"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-end gap-3">
+          {isPublishedBlog ? (
+            <p className="mr-auto text-xs text-yellow-500">
+              Saving as a draft will unpublish this blog while preserving its ID.
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            disabled={isPreviewLoading || isSaving}
+            onClick={handlePreview}
+            className="rounded border border-gray-600 px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {isPreviewLoading ? "Generating preview..." : "Preview"}
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={handleSaveDraft}
+            className="rounded bg-gray-700 px-4 py-2 text-white hover:bg-gray-600 disabled:opacity-50"
+          >
+            {isSaving
+              ? "Saving..."
+              : isPublishedBlog
+                ? "Unpublish & Save Draft"
+                : "Save Draft"}
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={handlePublish}
+            className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
+          >
+            {isSaving ? "Saving..." : blogId ? "Update & Publish" : "Publish"}
+          </button>
+        </div>
+      )}
 
       <BlogPreviewDialog
         article={previewArticle}

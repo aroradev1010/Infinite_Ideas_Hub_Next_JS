@@ -3,43 +3,86 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeft, FileText, LayoutDashboard } from "lucide-react"
+import {
+  ArrowLeft,
+  CircleUserRound,
+  FileText,
+  LayoutDashboard,
+  Users,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 interface DashboardShellProps {
   children: ReactNode
+  mode?: "admin" | "author"
 }
 
-const navigation = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/posts", icon: FileText, label: "Posts" },
-]
+const navigationByMode = {
+  author: [
+    {
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      exact: true,
+    },
+    {
+      href: "/dashboard/posts",
+      icon: FileText,
+      label: "Posts",
+      relatedPaths: [
+        "/dashboard/create",
+        "/dashboard/edit",
+        "/dashboard/drafts",
+      ],
+    },
+  ],
+  admin: [
+    {
+      href: "/admin",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      exact: true,
+    },
+    { href: "/admin/posts", icon: FileText, label: "Posts" },
+    { href: "/admin/authors", icon: CircleUserRound, label: "Authors" },
+    { href: "/admin/users", icon: Users, label: "Users" },
+  ],
+}
 
-function isItemActive(pathname: string, href: string) {
-  if (href === "/dashboard") return pathname === href
+function isItemActive(
+  pathname: string,
+  item: { exact?: boolean; href: string; relatedPaths?: string[] }
+) {
+  if (pathname === item.href) return true
+  if (item.exact) return false
 
   return (
-    pathname === href ||
-    pathname.startsWith("/dashboard/create") ||
-    pathname.startsWith("/dashboard/edit") ||
-    pathname.startsWith("/dashboard/drafts")
+    pathname.startsWith(`${item.href}/`) ||
+    item.relatedPaths?.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    ) ||
+    false
   )
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({
+  children,
+  mode = "author",
+}: DashboardShellProps) {
   const pathname = usePathname()
+  const navigation = navigationByMode[mode]
 
   return (
     <div className="-mb-20 min-h-[calc(100dvh-4.75rem)] border-t border-white/[0.06] bg-background text-foreground">
       <nav
         aria-label="Dashboard sections"
-        className="sticky top-0 z-20 border-b border-white/[0.07] bg-background/95 backdrop-blur-xl lg:hidden"
+        className="sticky top-0 z-20 overflow-x-auto border-b border-white/[0.07] bg-background/95 backdrop-blur-xl lg:hidden"
       >
         <ul className="mx-auto flex w-full max-w-7xl px-4 sm:px-6">
           {navigation.map((item) => {
             const Icon = item.icon
-            const isActive = isItemActive(pathname, item.href)
+            const isActive = isItemActive(pathname, item)
 
             return (
               <li key={item.href}>
@@ -47,7 +90,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-bold text-gray-500 transition-colors hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-400/70",
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-bold text-gray-500 transition-colors hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-400/70",
                     isActive && "border-cyan-400 text-cyan-300"
                   )}
                 >
@@ -67,7 +110,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
               <ul className="space-y-1">
                 {navigation.map((item) => {
                   const Icon = item.icon
-                  const isActive = isItemActive(pathname, item.href)
+                  const isActive = isItemActive(pathname, item)
 
                   return (
                     <li key={item.href}>

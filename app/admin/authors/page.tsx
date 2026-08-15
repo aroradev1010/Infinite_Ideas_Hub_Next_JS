@@ -1,6 +1,7 @@
 // app/admin/authors/page.tsx
 
 import AdminAuthorsTable from "@/components/admin/AdminAuthorstable";
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { getAllAuthorsForAdmin } from "@/lib/authorService";
 import { requireRolePage } from "@/lib/requireRole";
 
@@ -9,18 +10,23 @@ export default async function AdminAuthorsPage() {
     const authors = await getAllAuthorsForAdmin()
    
 
-    const payload = authors.map((a: any) => ({
+    const payload = authors.map((a) => ({
         id: a.id,
         name: a.name,
         bio: a.bio,
         profileImage: a.profileImage,
         slug: a.slug,
-        createdAt: a.createdAt?.toISOString?.() || "",
+        createdAt: a.createdAt || "",
     }));
 
     return (
         <section>
-            <h1 className="text-2xl font-bold mb-6">Manage Authors</h1>
+            <DashboardPageHeader
+                className="mb-8"
+                eyebrow="People"
+                title="Authors"
+                description="Manage author profiles and publishing identities."
+            />
             <AdminAuthorsTable initialAuthors={payload} />
         </section>
     );

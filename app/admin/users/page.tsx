@@ -2,6 +2,7 @@
 import { getAllUsersForAdmin } from "@/lib/userService";
 import { requireRolePage } from "@/lib/requireRole";
 import AdminUsersTable from "@/components/admin/AdminUsersTable";
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 
 
 export default async function AdminUsersPage() {
@@ -20,7 +21,12 @@ export default async function AdminUsersPage() {
 
     return (
         <section>
-            <h1 className="text-2xl font-bold mb-6">Manage Users</h1>
+            <DashboardPageHeader
+                className="mb-8"
+                eyebrow="Access"
+                title="Users"
+                description="Manage user access and author promotion."
+            />
             <AdminUsersTable initialUsers={payload} />
         </section>
     );

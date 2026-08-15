@@ -5,6 +5,7 @@ import { useCallback, useState } from "react"
 
 import { Editor } from "@/components/blocks/editor-x/editor"
 import { createEmptySerializedEditorState } from "@/lib/editor/state"
+import { cn } from "@/lib/utils"
 
 interface BlogEditorProps {
   initialEditorState?: SerializedEditorState
@@ -32,7 +33,10 @@ export default function BlogEditor({
 
   return (
     <div
-      className={`rounded-lg border border-gray-800 bg-gray-900 p-3 ${className}`}
+      className={cn(
+        "rounded-lg border border-gray-800 bg-gray-900 p-3",
+        className
+      )}
     >
       <Editor
         editorSerializedState={initialState}

@@ -1,146 +1,354 @@
-"use client";
+"use client"
 
-import React, { useState, useCallback } from "react";
-import Image from "next/image";
-import { toast } from "sonner";
+import { useCallback, useState } from "react"
+import Image from "next/image"
+import {
+  LoaderCircle,
+  MoreHorizontal,
+  ShieldCheck,
+  Trash2,
+  UserRoundPlus,
+  Users,
+} from "lucide-react"
+import { toast } from "sonner"
+
+import {
+  DashboardTable,
+  type DashboardTableColumn,
+} from "@/components/dashboard/DashboardTable"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { cn, formatDate } from "@/lib/utils"
 
 type UserRow = {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    image: string;
-    createdAt: string;
-};
+  id: string
+  name: string
+  email: string
+  role: string
+  image: string
+  createdAt: string
+}
 
-export default function AdminUsersTable({ initialUsers }: { initialUsers: UserRow[] }) {
-    const [users, setUsers] = useState<UserRow[]>(initialUsers);
-    const [loading, setLoading] = useState<string | null>(null);
+interface AdminActionResponse {
+  author?: { name?: string }
+  error?: string
+}
 
-    const promoteUser = useCallback(async (userId: string) => {
-        setLoading(userId);
-        try {
-            const res = await fetch("/api/admin/authors", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Promotion failed");
-            setUsers((prev) =>
-                prev.map((u) => (u.id === userId ? { ...u, role: "author" } : u))
-            );
-            toast.success(`${data.author?.name || "User"} promoted to Author`);
-        } catch (err: any) {
-            toast.error(err.message || "Failed to promote user.");
-        } finally {
-            setLoading(null);
-        }
-    }, []);
+function UserRoleBadge({ role }: { role: string }) {
+  const normalizedRole = role.toLowerCase()
 
-    const deleteUser = useCallback(async (userId: string, userName: string) => {
-        // Simple inline confirm — replace with a Dialog if you want fancier UX
-        if (!window.confirm(`Delete user "${userName}"? This cannot be undone.`)) return;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold capitalize",
+        normalizedRole === "admin" &&
+          "border-red-400/20 bg-red-400/[0.08] text-red-300",
+        normalizedRole === "author" &&
+          "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
+        normalizedRole !== "admin" &&
+          normalizedRole !== "author" &&
+          "border-slate-400/20 bg-slate-400/[0.08] text-slate-300"
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          normalizedRole === "admin" && "bg-red-400",
+          normalizedRole === "author" && "bg-emerald-400",
+          normalizedRole !== "admin" &&
+            normalizedRole !== "author" &&
+            "bg-slate-400"
+        )}
+        aria-hidden="true"
+      />
+      {role}
+    </span>
+  )
+}
 
-        setLoading(userId);
-        try {
-            const res = await fetch(`/api/admin/users?id=${encodeURIComponent(userId)}`, {
-                method: "DELETE",
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Delete failed");
+function UserIdentity({ user }: { user: UserRow }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <Image
+        src={user.image || "/fallback.avif"}
+        alt=""
+        width={36}
+        height={36}
+        className="size-9 shrink-0 rounded-full object-cover ring-1 ring-white/10"
+      />
+      <p className="truncate font-extrabold text-gray-100">
+        {user.name || "Unnamed user"}
+      </p>
+    </div>
+  )
+}
 
-            // Remove from local state immediately
-            setUsers((prev) => prev.filter((u) => u.id !== userId));
-            toast.success(`User "${userName}" deleted.`);
-        } catch (err: any) {
-            toast.error(err.message || "Failed to delete user.");
-        } finally {
-            setLoading(null);
-        }
-    }, []);
-
-    const renderRoleBadge = (role: string) => {
-        const colors =
-            role === "admin"
-                ? "bg-red-700 text-red-100"
-                : role === "author"
-                    ? "bg-green-700 text-green-100"
-                    : "bg-gray-700 text-gray-100";
-        return (
-            <span className={`px-2 py-1 rounded text-xs font-medium uppercase ${colors}`}>
-                {role}
-            </span>
-        );
-    };
-
+function UserActions({
+  loading,
+  onDelete,
+  onPromote,
+  user,
+}: {
+  loading: boolean
+  onDelete: (user: UserRow) => void
+  onPromote: (user: UserRow) => void
+  user: UserRow
+}) {
+  if (user.role === "admin") {
     return (
-        <div className="bg-black rounded shadow overflow-x-auto">
-            <table className="min-w-full text-left text-white">
-                <thead className="bg-gray-900">
-                    <tr>
-                        <th className="p-3">User</th>
-                        <th className="p-3">Email</th>
-                        <th className="p-3">Role</th>
-                        <th className="p-3">Created</th>
-                        <th className="p-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map((u) => (
-                        <tr key={u.id} className="border-t border-gray-800">
-                            <td className="p-3 flex items-center gap-3">
-                                <Image
-                                    src={u.image || "/fallback.avif"}
-                                    alt={u.name}
-                                    width={36}
-                                    height={36}
-                                    className="rounded-full object-cover"
-                                />
-                                <span>{u.name || "Unnamed User"}</span>
-                            </td>
-                            <td className="p-3">{u.email}</td>
-                            <td className="p-3">{renderRoleBadge(u.role)}</td>
-                            <td className="p-3">
-                                {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}
-                            </td>
-                            <td className="p-3">
-                                <div className="flex items-center gap-2">
-                                    {/* Promote button — only for plain users */}
-                                    {u.role === "user" && (
-                                        <button
-                                            onClick={() => promoteUser(u.id)}
-                                            disabled={loading === u.id}
-                                            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            {loading === u.id ? "Working…" : "Promote"}
-                                        </button>
-                                    )}
+      <span className="inline-flex items-center justify-end gap-1.5 text-xs font-semibold text-gray-600">
+        <ShieldCheck className="size-3.5" aria-hidden="true" />
+        Protected
+      </span>
+    )
+  }
 
-                                    {/* Delete button — not shown for admins (protect against self-delete) */}
-                                    {u.role !== "admin" && (
-                                        <button
-                                            onClick={() => deleteUser(u.id, u.name || u.email)}
-                                            disabled={loading === u.id}
-                                            className="bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            {loading === u.id ? "Working…" : "Delete"}
-                                        </button>
-                                    )}
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={loading}
+          aria-label={`Open actions for ${user.name || user.email}`}
+          className="size-8 text-gray-400 hover:bg-white/[0.06] hover:text-white data-[state=open]:bg-white/[0.06]"
+        >
+          {loading ? (
+            <LoaderCircle className="size-4 animate-spin" />
+          ) : (
+            <MoreHorizontal className="size-4" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="border-white/10 bg-[#11161d] text-gray-200"
+      >
+        {user.role === "user" && (
+          <>
+            <DropdownMenuItem onSelect={() => onPromote(user)}>
+              <UserRoundPlus aria-hidden="true" />
+              Promote to author
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-white/10" />
+          </>
+        )}
+        <DropdownMenuItem
+          className="text-red-400 focus:bg-red-500/10 focus:text-red-300"
+          onSelect={() => onDelete(user)}
+        >
+          <Trash2 aria-hidden="true" />
+          Delete user
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
-                                    {u.role === "admin" && (
-                                        <span className="text-gray-500 italic text-sm">Protected</span>
-                                    )}
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+export default function AdminUsersTable({
+  initialUsers,
+}: {
+  initialUsers: UserRow[]
+}) {
+  const [users, setUsers] = useState<UserRow[]>(initialUsers)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<UserRow | null>(null)
 
-            {users.length === 0 && (
-                <p className="text-center py-8 text-gray-500">No users found.</p>
-            )}
-        </div>
-    );
+  const promoteUser = useCallback(async (user: UserRow) => {
+    setLoadingId(user.id)
+    try {
+      const response = await fetch("/api/admin/authors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const result = (await response.json()) as AdminActionResponse
+      if (!response.ok) throw new Error(result.error || "Promotion failed")
+
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === user.id ? { ...item, role: "author" } : item
+        )
+      )
+      toast.success(`${result.author?.name || user.name || "User"} promoted to Author`)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to promote user."
+      )
+    } finally {
+      setLoadingId(null)
+    }
+  }, [])
+
+  const deleteUser = useCallback(async () => {
+    if (!pendingDelete) return
+
+    const user = pendingDelete
+    setLoadingId(user.id)
+    try {
+      const response = await fetch(
+        `/api/admin/users?id=${encodeURIComponent(user.id)}`,
+        { method: "DELETE" }
+      )
+      const result = (await response.json()) as AdminActionResponse
+      if (!response.ok) throw new Error(result.error || "Delete failed")
+
+      setUsers((current) => current.filter((item) => item.id !== user.id))
+      setPendingDelete(null)
+      toast.success(`User "${user.name || user.email}" deleted.`)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete user."
+      )
+    } finally {
+      setLoadingId(null)
+    }
+  }, [pendingDelete])
+
+  const columns: DashboardTableColumn<UserRow>[] = [
+    {
+      key: "user",
+      label: "User",
+      headerClassName: "w-[28%]",
+      render: (user) => <UserIdentity user={user} />,
+    },
+    {
+      key: "email",
+      label: "Email",
+      headerClassName: "w-[30%]",
+      cellClassName: "truncate font-semibold text-gray-400",
+      render: (user) => user.email,
+    },
+    {
+      key: "role",
+      label: "Role",
+      headerClassName: "w-[14%]",
+      render: (user) => <UserRoleBadge role={user.role} />,
+    },
+    {
+      key: "created",
+      label: "Created",
+      headerClassName: "w-[18%]",
+      cellClassName: "font-semibold text-gray-500",
+      render: (user) =>
+        user.createdAt ? (
+          <time dateTime={user.createdAt}>{formatDate(user.createdAt)}</time>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      headerClassName: "w-[10%] text-right",
+      cellClassName: "text-right",
+      screenReaderLabel: true,
+      render: (user) => (
+        <UserActions
+          user={user}
+          loading={loadingId === user.id}
+          onPromote={(selectedUser) => void promoteUser(selectedUser)}
+          onDelete={setPendingDelete}
+        />
+      ),
+    },
+  ]
+
+  if (users.length === 0) {
+    return (
+      <Card className="items-center border-dashed border-white/10 bg-card/20 px-6 py-14 text-center shadow-none">
+        <span className="mb-4 flex size-11 items-center justify-center rounded-full border border-cyan-400/15 bg-cyan-400/[0.07] text-cyan-300">
+          <Users className="size-5" aria-hidden="true" />
+        </span>
+        <h3 className="font-extrabold text-white">No users found</h3>
+        <p className="mt-2 max-w-md text-sm leading-6 text-gray-500">
+          Registered users will appear here.
+        </p>
+      </Card>
+    )
+  }
+
+  return (
+    <>
+      <DashboardTable
+        rows={users}
+        columns={columns}
+        getRowId={(user) => user.id}
+        renderMobileRow={(user) => (
+          <>
+            <div className="flex items-start justify-between gap-4">
+              <UserIdentity user={user} />
+              <UserActions
+                user={user}
+                loading={loadingId === user.id}
+                onPromote={(selectedUser) => void promoteUser(selectedUser)}
+                onDelete={setPendingDelete}
+              />
+            </div>
+            <p className="mt-3 truncate text-sm font-semibold text-gray-400">
+              {user.email}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <UserRoleBadge role={user.role} />
+              <span className="text-xs font-semibold text-gray-600">
+                {user.createdAt ? `Joined ${formatDate(user.createdAt)}` : "Join date unavailable"}
+              </span>
+            </div>
+          </>
+        )}
+      />
+
+      <Dialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !loadingId) setPendingDelete(null)
+        }}
+      >
+        <DialogContent className="border-white/10 bg-[#11161d] text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete this user?</DialogTitle>
+            <DialogDescription className="leading-6 text-gray-400">
+              &ldquo;{pendingDelete?.name || pendingDelete?.email}&rdquo; and their
+              account data will be permanently removed. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <DialogClose asChild>
+              <Button
+                variant="outline"
+                disabled={Boolean(loadingId)}
+                className="border-white/10 bg-transparent text-gray-300 hover:bg-white/[0.05] hover:text-white"
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              disabled={Boolean(loadingId)}
+              onClick={() => void deleteUser()}
+            >
+              {loadingId && <LoaderCircle className="animate-spin" />}
+              {loadingId ? "Deleting..." : "Delete user"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }

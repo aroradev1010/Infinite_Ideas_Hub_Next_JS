@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <div>
       <SubscriptionToast />
-      <div className="h-96">
+      <div className="h-80">
         <StarBackground imageSrc="/headerImage.webp" text="" />
       </div>
       <div className="max-w-7xl mx-auto xl:px-10">

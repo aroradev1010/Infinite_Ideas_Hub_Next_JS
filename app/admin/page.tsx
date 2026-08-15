@@ -1,29 +1,115 @@
-import { requireRolePage } from "@/lib/requireRole";
+import Link from "next/link"
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileText,
+  PenLine,
+  Users,
+} from "lucide-react"
+
+import AdminPostsTable from "@/components/admin/AdminPostsTable"
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
+import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard"
+import { Button } from "@/components/ui/button"
+import { getAllAuthorsForAdmin } from "@/lib/authorService"
+import { getAllBlogsForAdmin } from "@/lib/blogService.server"
+import { requireRolePage } from "@/lib/requireRole"
+import { getAllUsersForAdmin } from "@/lib/userService"
+
+const summaryCards = [
+  {
+    key: "posts" as const,
+    label: "Total Posts",
+    icon: FileText,
+    iconClassName: "border-cyan-400/20 bg-cyan-400/[0.08] text-cyan-300",
+  },
+  {
+    key: "published" as const,
+    label: "Published",
+    icon: CheckCircle2,
+    iconClassName:
+      "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
+  },
+  {
+    key: "authors" as const,
+    label: "Authors",
+    icon: PenLine,
+    iconClassName: "border-amber-300/15 bg-amber-300/[0.07] text-amber-200",
+  },
+  {
+    key: "users" as const,
+    label: "Users",
+    icon: Users,
+    iconClassName: "border-cyan-400/20 bg-cyan-400/[0.08] text-cyan-300",
+  },
+]
 
 export default async function AdminPage() {
-    await requireRolePage(["admin"]);
+  await requireRolePage(["admin"])
+  const [posts, authors, users] = await Promise.all([
+    getAllBlogsForAdmin(),
+    getAllAuthorsForAdmin(),
+    getAllUsersForAdmin(),
+  ])
+  const counts = {
+    posts: posts.length,
+    published: posts.filter((post) => post.status === "published").length,
+    authors: authors.length,
+    users: users.length,
+  }
+  const recentPosts = posts.slice(0, 5)
 
-    return (
-        <section>
-            <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-            <p className="text-gray-600">
-                Welcome to the Infinite Ideas Hub Admin Panel.
+  return (
+    <section className="space-y-9">
+      <DashboardPageHeader
+        eyebrow="Admin overview"
+        title="Admin Dashboard"
+        description="Manage content, publishing, authors, and users."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => (
+          <DashboardStatCard
+            key={card.key}
+            icon={card.icon}
+            iconClassName={card.iconClassName}
+            label={card.label}
+            value={counts[card.key]}
+          />
+        ))}
+      </div>
+
+      <section aria-labelledby="recent-posts-heading">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <h2
+              id="recent-posts-heading"
+              className="text-xl font-black tracking-tight text-white sm:text-2xl"
+            >
+              Recent Posts
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              The five most recently updated posts across all authors.
             </p>
+          </div>
+          <Button
+            asChild
+            variant="ghost"
+            className="shrink-0 text-gray-400 hover:bg-white/[0.05] hover:text-cyan-300"
+          >
+            <Link href="/admin/posts">
+              View all
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
 
-            <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-3">
-                <div className="bg-white p-4 rounded shadow">
-                    <h2 className="font-semibold text-lg">Posts</h2>
-                    <p className="text-gray-500">Manage all blogs and approvals.</p>
-                </div>
-                <div className="bg-white p-4 rounded shadow">
-                    <h2 className="font-semibold text-lg">Authors</h2>
-                    <p className="text-gray-500">View and update author profiles.</p>
-                </div>
-                <div className="bg-white p-4 rounded shadow">
-                    <h2 className="font-semibold text-lg">Categories</h2>
-                    <p className="text-gray-500">Add or remove blog categories.</p>
-                </div>
-            </div>
-        </section>
-    );
+        <AdminPostsTable
+          key={recentPosts.map((post) => post.id).join("-")}
+          initialPosts={recentPosts}
+          variant="recent"
+        />
+      </section>
+    </section>
+  )
 }

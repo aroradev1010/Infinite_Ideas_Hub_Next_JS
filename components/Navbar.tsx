@@ -106,7 +106,7 @@ export const Navbar = () => {
           </div>
 
           <SecondaryButton
-            className="bg-secondary hover:bg-secondary/60 text-white rounded-full p-2 xl:hidden"
+            className="bg-primary hover:bg-primary/60 text-white rounded-full p-2 xl:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >

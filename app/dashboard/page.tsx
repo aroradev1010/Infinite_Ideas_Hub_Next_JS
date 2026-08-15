@@ -4,10 +4,11 @@ import {
   CheckCircle2,
   FilePenLine,
   FileText,
-  Plus,
 } from "lucide-react"
 
 import DashboardBlogsTable from "@/components/dashboard/DashboardBlogsTable"
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
+import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAuthorByUserId } from "@/lib/authorService"
@@ -81,52 +82,30 @@ export default async function DashboardPage() {
 
   return (
     <section className="space-y-9">
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-400">
-            Overview
-          </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Dashboard
-          </h1>
-          <p className="mt-2 text-sm text-gray-500 sm:text-base">
-            Pick up where you left off and keep your publishing moving.
-          </p>
-        </div>
-        <Link href="/dashboard/create">
-          <PrimaryButton
-            text="+ New Blog"
-            className="w-fullfont-extrabold text-slate-950 shadow-lg sm:w-auto"
-          />
-
-        </Link>
-      </header>
+      <DashboardPageHeader
+        eyebrow="Overview"
+        title="Dashboard"
+        description="Pick up where you left off and keep your publishing moving."
+        action={
+          <Link href="/dashboard/create">
+            <PrimaryButton
+              text="+ New Blog"
+              className="w-fullfont-extrabold text-slate-950 shadow-lg sm:w-auto"
+            />
+          </Link>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {summaryCards.map((card) => {
-          const Icon = card.icon
-
-          return (
-            <Card
-              key={card.key}
-              className="border-white/[0.08] bg-card/20 shadow-none"
-            >
-              <CardContent className="flex items-center justify-between p-5 sm:p-6">
-                <div>
-                  <p className="text-sm font-bold text-gray-500">{card.label}</p>
-                  <p className="mt-2 text-3xl font-black tracking-tight text-white">
-                    {counts[card.key]}
-                  </p>
-                </div>
-                <span
-                  className={`flex size-11 items-center justify-center rounded-xl border ${card.iconClassName}`}
-                >
-                  <Icon className="size-5" aria-hidden="true" />
-                </span>
-              </CardContent>
-            </Card>
-          )
-        })}
+        {summaryCards.map((card) => (
+          <DashboardStatCard
+            key={card.key}
+            icon={card.icon}
+            iconClassName={card.iconClassName}
+            label={card.label}
+            value={counts[card.key]}
+          />
+        ))}
       </div>
 
       <section aria-labelledby="recent-posts-heading">

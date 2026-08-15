@@ -122,7 +122,7 @@ export function Plugins({}) {
     <div className="relative">
       <ToolbarPlugin>
         {({ blockType }) => (
-          <div className="vertical-align-middle sticky top-0 z-10 flex items-center gap-2 overflow-auto border-b p-1">
+          <div className="EditorTheme__scrollbar vertical-align-middle sticky top-0 z-10 flex items-center gap-2 overflow-auto border-b p-1">
             <HistoryToolbarPlugin />
             <Separator orientation="vertical" className="!h-7" />
             <BlockFormatDropDown>
@@ -175,7 +175,7 @@ export function Plugins({}) {
               <div className="" ref={onRef}>
                 <ContentEditable
                   placeholder={placeholder}
-                  className="ContentEditable__root relative block h-[calc(100vh-90px)] min-h-72 overflow-auto px-8 py-4 focus:outline-none"
+                  className="ContentEditable__root EditorTheme__scrollbar relative block h-[calc(100vh-90px)] min-h-72 overflow-auto px-8 py-4 focus:outline-none"
                 />
               </div>
             </div>
@@ -268,7 +268,7 @@ export function Plugins({}) {
         <ListMaxIndentLevelPlugin />
       </div>
       <ActionsPlugin>
-        <div className="clear-both flex items-center justify-between gap-2 overflow-auto border-t p-1">
+        <div className="EditorTheme__scrollbar clear-both flex items-center justify-between gap-2 overflow-auto border-t p-1">
           <div className="flex flex-1 justify-start">
             <MaxLengthPlugin maxLength={maxLength} />
             <CharacterLimitPlugin maxLength={maxLength} charset="UTF-16" />
